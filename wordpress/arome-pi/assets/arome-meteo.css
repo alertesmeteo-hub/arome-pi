@@ -1,0 +1,1902 @@
+.ampi-card {
+    --ampi-navy: #073b63;
+    --ampi-blue: #086ca8;
+    --ampi-cyan: #1fb8d0;
+    --ampi-line: #d9e5ed;
+    --ampi-soft: #f3f8fb;
+    width: 100%;
+    max-width: 1180px;
+    box-sizing: border-box;
+    margin: 1.25rem auto;
+    overflow: hidden;
+    border: 1px solid #cbdce7;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(7, 59, 99, .14);
+    color: #183242;
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+
+.ampi-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 22px 26px;
+    background: linear-gradient(120deg, var(--ampi-navy), #075887 62%, #0b83ac);
+    color: #fff;
+}
+
+.ampi-header h2 {
+    margin: 2px 0 5px;
+    color: #fff;
+    font-size: clamp(1.25rem, 2vw, 1.85rem);
+    line-height: 1.15;
+}
+
+.ampi-kicker,
+.ampi-meta {
+    margin: 0;
+}
+
+.ampi-kicker {
+    color: #aeefff;
+    font-size: .69rem;
+    font-weight: 800;
+    letter-spacing: .09em;
+}
+
+.ampi-meta {
+    color: #dceff7;
+    font-size: .82rem;
+}
+
+.ampi-meta span {
+    padding: 0 6px;
+}
+
+.ampi-badge {
+    min-width: 112px;
+    padding: 9px 12px;
+    border: 1px solid rgba(255, 255, 255, .45);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .12);
+    text-align: center;
+    font-size: .72rem;
+    letter-spacing: .08em;
+    line-height: 1.05;
+}
+
+.ampi-badge strong {
+    font-size: 1.18rem;
+}
+
+.ampi-card [hidden] {
+    display: none !important;
+}
+
+.ampi-toolbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 22px;
+    padding: 18px 22px;
+    border-bottom: 1px solid #cfe0e9;
+    background: linear-gradient(180deg, #f7fbfd, #edf6fa);
+}
+
+.ampi-search {
+    position: relative;
+    z-index: 5;
+    width: min(100%, 590px);
+}
+
+.ampi-search > label {
+    display: block;
+    margin: 0 0 6px;
+    color: var(--ampi-navy);
+    font-size: .82rem;
+    font-weight: 800;
+}
+
+.ampi-search-control {
+    position: relative;
+}
+
+.ampi-search-icon {
+    position: absolute;
+    top: 50%;
+    left: 13px;
+    z-index: 1;
+    color: #337894;
+    font-size: 1.35rem;
+    line-height: 1;
+    transform: translateY(-52%);
+    pointer-events: none;
+}
+
+.ampi-card .ampi-city-input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 46px;
+    margin: 0;
+    padding: 9px 42px;
+    border: 2px solid #86b6ca;
+    border-radius: 10px;
+    outline: 0;
+    background: #fff;
+    box-shadow: 0 2px 7px rgba(7, 59, 99, .08);
+    color: #173c51;
+    font: 700 .96rem/1.2 Inter, "Segoe UI", Arial, sans-serif;
+    appearance: none;
+}
+
+.ampi-card .ampi-city-input:focus {
+    border-color: var(--ampi-blue);
+    box-shadow: 0 0 0 3px rgba(8, 108, 168, .17);
+}
+
+.ampi-card .ampi-city-input::-webkit-search-cancel-button {
+    cursor: pointer;
+}
+
+.ampi-search-results {
+    position: absolute;
+    top: 72px;
+    right: 0;
+    left: 0;
+    z-index: 20;
+    max-height: 330px;
+    overflow-y: auto;
+    border: 1px solid #9fc4d5;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 14px 32px rgba(7, 59, 99, .24);
+}
+
+.ampi-card .ampi-search-result {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 52px;
+    margin: 0;
+    padding: 9px 13px;
+    border: 0;
+    border-bottom: 1px solid #dce9ef;
+    border-radius: 0;
+    background: #fff;
+    color: #183b4e;
+    text-align: left;
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    cursor: pointer;
+}
+
+.ampi-card .ampi-search-result:last-child {
+    border-bottom: 0;
+}
+
+.ampi-card .ampi-search-result:hover,
+.ampi-card .ampi-search-result:focus,
+.ampi-card .ampi-search-result.is-active {
+    outline: 0;
+    background: #e6f5fb;
+    color: #073b63;
+}
+
+.ampi-result-name {
+    font-size: .9rem;
+    font-weight: 800;
+}
+
+.ampi-result-details {
+    color: #587583;
+    font-size: .74rem;
+    white-space: nowrap;
+}
+
+.ampi-search-status {
+    min-height: 18px;
+    margin: 5px 2px 0;
+    color: #55717f;
+    font-size: .72rem;
+}
+
+.ampi-search-status.ampi-search-error {
+    color: #9a2727;
+    font-weight: 700;
+}
+
+.ampi-coverage {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: flex-end;
+    padding-top: 22px;
+    color: #496978;
+    font-size: .72rem;
+}
+
+.ampi-coverage strong {
+    color: var(--ampi-navy);
+    font-size: .95rem;
+}
+
+.ampi-table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-color: #9bb9ca #edf4f7;
+}
+
+.ampi-stale {
+    margin: 0;
+    padding: 10px 18px;
+    border-bottom: 1px solid #e7c56c;
+    background: #fff6d8;
+    color: #704f00;
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+.ampi-table {
+    width: 100%;
+    min-width: 820px;
+    margin: 0;
+    border: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: .84rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.ampi-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 10px 7px;
+    border: 0;
+    border-bottom: 2px solid #b8d2e1;
+    background: #e8f3f8;
+    color: #17435c;
+    text-align: center;
+    text-transform: uppercase;
+    font-size: .69rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+    white-space: nowrap;
+}
+
+.ampi-table tbody th,
+.ampi-table tbody td {
+    padding: 8px 7px;
+    border: 0;
+    border-bottom: 1px solid var(--ampi-line);
+    background: #fff;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.ampi-table .ampi-loading {
+    height: 110px;
+    background: #fff !important;
+    color: #426677;
+    text-align: center;
+    font-weight: 700;
+}
+
+.ampi-table .ampi-load-error {
+    color: #942424;
+}
+
+.ampi-table tbody tr:nth-child(even) th,
+.ampi-table tbody tr:nth-child(even) td {
+    background: var(--ampi-soft);
+}
+
+.ampi-table tbody tr:hover th,
+.ampi-table tbody tr:hover td {
+    background: #eaf7fb;
+}
+
+.ampi-table tbody tr.ampi-new-day th,
+.ampi-table tbody tr.ampi-new-day td {
+    border-top: 3px solid var(--ampi-cyan);
+}
+
+.ampi-table tbody th {
+    color: var(--ampi-navy);
+    font-weight: 800;
+}
+
+.ampi-hour {
+    color: #075887;
+    font-weight: 800;
+}
+
+.ampi-condition {
+    min-width: 112px;
+    text-align: left !important;
+}
+
+.ampi-icon {
+    display: inline-block;
+    width: 28px;
+    margin-right: 4px;
+    text-align: center;
+    font-size: 1.15rem;
+}
+
+.ampi-temperature {
+    font-weight: 900;
+}
+
+.ampi-temp-cold { color: #225db4; background: #e5f0ff !important; }
+.ampi-temp-cool { color: #087da1; }
+.ampi-temp-mild { color: #278238; }
+.ampi-temp-warm { color: #c27500; background: #fff6d8 !important; }
+.ampi-temp-hot { color: #d64a16; background: #ffe8dc !important; }
+.ampi-temp-extreme { color: #fff; background: #bb142c !important; }
+
+.ampi-rain {
+    color: #075da3;
+    background: #dff2ff !important;
+    font-weight: 800;
+}
+
+.ampi-direction {
+    display: inline-block;
+    min-width: 31px;
+    margin-left: 3px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    background: #dfeaf0;
+    color: #274c60;
+    font-size: .7rem;
+    font-weight: 800;
+}
+
+.ampi-gust-moderate { color: #986400; background: #fff4c9 !important; }
+.ampi-gust-strong { color: #b5440a; background: #ffe5d4 !important; }
+.ampi-gust-danger { color: #fff; background: #b7192f !important; }
+
+.ampi-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 20px;
+    padding: 12px 18px;
+    background: #edf5f8;
+    color: #4d6878;
+    font-size: .72rem;
+}
+
+.ampi-footer a {
+    color: #075f94;
+    font-weight: 700;
+}
+
+.ampi-message {
+    margin: 1rem 0;
+    padding: 13px 16px;
+    border-radius: 8px;
+    font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.ampi-error {
+    border: 1px solid #e5b5b5;
+    background: #fff0f0;
+    color: #8a2020;
+}
+
+@media (max-width: 680px) {
+    .ampi-card {
+        border-radius: 10px;
+    }
+
+    .ampi-header {
+        align-items: flex-start;
+        padding: 17px;
+    }
+
+    .ampi-toolbar {
+        display: block;
+        padding: 15px;
+    }
+
+    .ampi-search {
+        width: 100%;
+    }
+
+    .ampi-card .ampi-search-result {
+        display: block;
+    }
+
+    .ampi-result-name,
+    .ampi-result-details {
+        display: block;
+    }
+
+    .ampi-result-details {
+        margin-top: 3px;
+        white-space: normal;
+    }
+
+    .ampi-coverage {
+        display: none;
+    }
+
+    .ampi-badge {
+        min-width: 86px;
+    }
+
+    .ampi-footer {
+        display: block;
+    }
+
+    .ampi-footer span {
+        display: block;
+        margin: 4px 0;
+    }
+}
+
+@media print {
+    .ampi-card {
+        box-shadow: none;
+    }
+
+    .ampi-table-wrap {
+        overflow: visible;
+    }
+
+    .ampi-table {
+        min-width: 0;
+        font-size: 7pt;
+    }
+}
+
+/* === Sélecteur Général / Orages / Neige — v2.3 === */
+.ampi-tabs {
+    display: flex;
+    gap: 10px;
+    padding: 14px 18px;
+    border-bottom: 1px solid #cfe0e9;
+    background: #fff;
+}
+
+.ampi-card .ampi-tab {
+    appearance: none;
+    margin: 0;
+    padding: 10px 16px;
+    border: 1px solid #a9c5d4;
+    border-radius: 999px;
+    background: #f4f8fb;
+    color: #214b61;
+    font: 800 .84rem/1.2 Inter, "Segoe UI", Arial, sans-serif;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+.ampi-card .ampi-tab:hover,
+.ampi-card .ampi-tab:focus-visible {
+    outline: 0;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(7, 59, 99, .12);
+}
+
+.ampi-card .ampi-tab.is-active {
+    border-color: #0b6f9f;
+    background: #0b6f9f;
+    color: #fff;
+    box-shadow: 0 6px 15px rgba(11, 111, 159, .22);
+}
+
+.ampi-card .ampi-tab-storm.is-active {
+    border-color: #7b3fa1;
+    background: linear-gradient(135deg, #563072, #8d4ca8);
+    box-shadow: 0 6px 15px rgba(102, 55, 132, .24);
+}
+
+.ampi-card .ampi-tab-snow.is-active {
+    border-color: #2787ad;
+    background: linear-gradient(135deg, #176a91, #50a9c9);
+    box-shadow: 0 6px 15px rgba(23, 106, 145, .24);
+}
+
+.ampi-panel[hidden] {
+    display: none !important;
+}
+
+.ampi-storm-summary {
+    margin: 0;
+    padding: 11px 18px;
+    border-bottom: 1px solid #d8c7e5;
+    background: #f5eff9;
+    color: #55306a;
+    font-size: .82rem;
+    font-weight: 800;
+}
+
+.ampi-storm-summary-warning {
+    border-bottom-color: #e6c467;
+    background: #fff6d8;
+    color: #704f00;
+}
+
+.ampi-storm-wrap {
+    background: #fff;
+}
+
+.ampi-storm-table {
+    min-width: 1680px;
+    font-size: .77rem;
+}
+
+.ampi-storm-table thead th {
+    background: #f0e8f6;
+    color: #4f2b63;
+    border-bottom-color: #cbb6d8;
+}
+
+.ampi-storm-table tbody tr:nth-child(even) th,
+.ampi-storm-table tbody tr:nth-child(even) td {
+    background: #fbf8fd;
+}
+
+.ampi-thunder-risk,
+.ampi-hazard {
+    font-weight: 900;
+}
+
+.ampi-thunder-0 { background: #f2f4f5 !important; color: #53616a; }
+.ampi-thunder-1 { background: #e8f7ea !important; color: #207438; }
+.ampi-thunder-2 { background: #fff5c9 !important; color: #806400; }
+.ampi-thunder-3 { background: #ffe3c7 !important; color: #a44600; }
+.ampi-thunder-4 { background: #b81f37 !important; color: #fff; }
+
+.ampi-hazard-0 { color: #3f6c4b; }
+.ampi-hazard-1 { background: #eef7e9 !important; color: #397144; }
+.ampi-hazard-2 { background: #fff0c4 !important; color: #8b6100; }
+.ampi-hazard-3 { background: #ffd9d9 !important; color: #9b2323; }
+
+.ampi-cape-mid {
+    background: #fff2c8 !important;
+    color: #805a00;
+    font-weight: 800;
+}
+
+.ampi-cape-high {
+    background: #ffd5bd !important;
+    color: #a33e00;
+    font-weight: 900;
+}
+
+.ampi-lightning-high {
+    background: #eee3ff !important;
+    color: #5f2e99;
+    font-weight: 900;
+}
+
+.ampi-rain-heavy {
+    background: #d9ebff !important;
+    color: #075aa5;
+    font-weight: 900;
+}
+
+.ampi-storm-type {
+    min-width: 150px;
+    color: #4d2a61;
+    font-weight: 800;
+}
+
+
+.ampi-details-cell {
+    min-width: 74px;
+}
+
+.ampi-card .ampi-details-button {
+    margin: 0;
+    padding: 5px 8px;
+    border: 1px solid #af92c2;
+    border-radius: 7px;
+    background: #f5eff9;
+    color: #5d3471;
+    font: 800 .7rem/1.1 Inter, "Segoe UI", Arial, sans-serif;
+    cursor: pointer;
+}
+
+.ampi-card .ampi-details-button:hover,
+.ampi-card .ampi-details-button:focus-visible {
+    outline: 0;
+    background: #e9dcf1;
+}
+
+.ampi-advanced-row td {
+    padding: 0 !important;
+    background: #f8f4fb !important;
+}
+
+.ampi-advanced-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(135px, 1fr));
+    gap: 8px;
+    padding: 10px 14px 12px;
+    text-align: left;
+}
+
+.ampi-advanced-item {
+    padding: 8px 10px;
+    border: 1px solid #ddd0e6;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.ampi-advanced-label,
+.ampi-advanced-value {
+    display: block;
+}
+
+.ampi-advanced-label {
+    margin-bottom: 3px;
+    color: #6c5875;
+    font-size: .66rem;
+    font-weight: 700;
+}
+
+.ampi-advanced-value {
+    color: #47275a;
+    font-size: .82rem;
+    font-weight: 900;
+}
+
+.ampi-storm-note {
+    margin: 0;
+    padding: 13px 18px 15px;
+    border-top: 1px solid #e1d7e8;
+    background: #faf8fc;
+    color: #665b6c;
+    font-size: .72rem;
+    line-height: 1.45;
+}
+
+
+/* === Risque de neige — v2.3 === */
+.ampi-snow-summary {
+    margin: 0;
+    padding: 11px 18px;
+    border-bottom: 1px solid #b9d8e5;
+    background: #edf8fc;
+    color: #175a76;
+    font-size: .82rem;
+    font-weight: 800;
+}
+
+.ampi-snow-summary-warning {
+    border-bottom-color: #e6c467;
+    background: #fff6d8;
+    color: #704f00;
+}
+
+.ampi-snow-table {
+    min-width: 1220px;
+    font-size: .8rem;
+}
+
+.ampi-snow-table thead th {
+    background: #e8f5fa;
+    color: #175a76;
+    border-bottom-color: #add2e0;
+}
+
+.ampi-snow-table tbody tr:nth-child(even) th,
+.ampi-snow-table tbody tr:nth-child(even) td {
+    background: #f7fbfd;
+}
+
+.ampi-snow-risk,
+.ampi-stick {
+    font-weight: 900;
+}
+
+.ampi-snow-0 { background: #f2f4f5 !important; color: #53616a; }
+.ampi-snow-1 { background: #e8f7ea !important; color: #207438; }
+.ampi-snow-2 { background: #fff5c9 !important; color: #806400; }
+.ampi-snow-3 { background: #dceeff !important; color: #145d91; }
+.ampi-snow-4 { background: #255f9a !important; color: #fff; }
+
+.ampi-stick-0 { color: #66747c; }
+.ampi-stick-1 { color: #36714a; }
+.ampi-stick-2 { background: #e8f3ff !important; color: #205f95; }
+.ampi-stick-3 { background: #cfe5ff !important; color: #114f86; }
+
+.ampi-snow-note {
+    margin: 0;
+    padding: 13px 18px 15px;
+    border-top: 1px solid #d2e6ee;
+    background: #f8fcfd;
+    color: #526b76;
+    font-size: .72rem;
+    line-height: 1.45;
+}
+
+/* === Ajustements v2.4 : dates groupées, vent/pluie colorés, diagrammes === */
+.ampi-day-cell {
+    min-width: 66px;
+    padding: 7px 6px !important;
+    vertical-align: middle;
+    border-right: 1px solid #9ed7d7 !important;
+    background: #dff8f6 !important;
+    color: #075887 !important;
+    text-align: center !important;
+    white-space: normal !important;
+}
+
+.ampi-day-weekday,
+.ampi-day-date {
+    display: block;
+    line-height: 1.15;
+}
+
+.ampi-day-weekday {
+    margin-bottom: 4px;
+    font-size: .76rem;
+    font-weight: 900;
+    text-transform: capitalize;
+}
+
+.ampi-day-date {
+    font-size: .72rem;
+    font-weight: 800;
+}
+
+.ampi-hour {
+    min-width: 54px;
+}
+
+.ampi-wind-cell strong {
+    display: inline-block;
+    min-width: 58px;
+}
+
+.ampi-direction {
+    display: inline-flex;
+    min-width: 48px;
+    margin-left: 5px;
+    padding: 3px 5px;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border-radius: 6px;
+    background: #edf3f6;
+    color: #274c60;
+    font-size: .69rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.ampi-wind-arrow {
+    display: inline-block;
+    width: 15px;
+    transform-origin: 50% 50%;
+    font-size: .95rem;
+    line-height: 1;
+}
+
+.ampi-wind-light { color: #26725b; }
+.ampi-direction.ampi-wind-light { background: #e7f6ef; }
+.ampi-wind-moderate { color: #32729b; }
+.ampi-direction.ampi-wind-moderate { background: #e5f1f8; }
+.ampi-wind-fresh { color: #8b6500; }
+.ampi-direction.ampi-wind-fresh { background: #fff4c9; }
+.ampi-wind-strong { color: #b34a0a; }
+.ampi-direction.ampi-wind-strong { background: #ffe4cf; }
+.ampi-wind-violent { color: #a4142d; }
+.ampi-direction.ampi-wind-violent { background: #ffd9df; }
+
+.ampi-rain-trace {
+    background: #eef9ff !important;
+    color: #35779a !important;
+}
+.ampi-rain-light {
+    background: #dff3ff !important;
+    color: #126493 !important;
+}
+.ampi-rain-moderate {
+    background: #bfe7ff !important;
+    color: #075b91 !important;
+}
+.ampi-rain-strong {
+    background: #81c9f3 !important;
+    color: #063f70 !important;
+}
+.ampi-rain-intense {
+    background: #225ea8 !important;
+    color: #fff !important;
+}
+
+.ampi-top-scroll {
+    height: 18px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-bottom: 1px solid #d8c7e5;
+    background: #fbf8fd;
+    scrollbar-color: #9d7caf #eee6f3;
+}
+
+.ampi-top-scroll[hidden] {
+    display: none !important;
+}
+
+.ampi-top-scroll > div {
+    height: 1px;
+}
+
+.ampi-advanced-list {
+    display: flex;
+    width: min(100%, 520px);
+    margin: 0;
+    padding: 10px 14px 12px;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+}
+
+.ampi-advanced-list .ampi-advanced-item {
+    display: flex;
+    padding: 7px 10px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    border: 1px solid #ddd0e6;
+    border-radius: 7px;
+    background: #fff;
+}
+
+.ampi-advanced-list .ampi-advanced-label,
+.ampi-advanced-list .ampi-advanced-value {
+    display: block;
+    margin: 0;
+}
+
+.ampi-advanced-list .ampi-advanced-label {
+    color: #6c5875;
+    font-size: .72rem;
+    font-weight: 800;
+}
+
+.ampi-advanced-list .ampi-advanced-value {
+    color: #47275a;
+    font-size: .82rem;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.ampi-charts {
+    display: grid;
+    gap: 16px;
+    padding: 20px 18px 22px;
+    border-top: 1px solid #dbe7ee;
+    background: #f7fafc;
+}
+
+.ampi-chart-card {
+    overflow: hidden;
+    border: 1px solid #d4e2ea;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 5px 16px rgba(7, 59, 99, .07);
+}
+
+.ampi-chart-card h3 {
+    margin: 0;
+    padding: 13px 15px 8px;
+    color: #123f5a;
+    font-size: .94rem;
+    font-weight: 900;
+}
+
+.ampi-chart-total {
+    margin: -3px 15px 2px;
+    color: #0a679a;
+    font-size: .78rem;
+    font-weight: 900;
+}
+
+.ampi-chart {
+    min-height: 180px;
+    padding: 0 8px 8px;
+}
+
+.ampi-chart-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 180px;
+}
+
+.ampi-chart-grid {
+    stroke: #dce7ed;
+    stroke-width: 1;
+}
+
+.ampi-chart-axis {
+    fill: #607987;
+    font: 700 11px/1 Inter, "Segoe UI", Arial, sans-serif;
+}
+
+.ampi-chart-xaxis {
+    font-size: 10px;
+}
+
+.ampi-chart-axis-cumulative {
+    fill: #315a8d;
+}
+
+.ampi-chart-line {
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.ampi-series-temperature { stroke: #d45b29; }
+.ampi-series-pressure { stroke: #5d4ba7; }
+.ampi-series-wind { stroke: #1c7f8c; }
+.ampi-series-gust { stroke: #d07a23; }
+.ampi-series-rain-cumulative { stroke: #315a8d; stroke-width: 2.4; }
+.ampi-chart-rain-bar { fill: #45a9dd; }
+
+.ampi-chart-empty {
+    display: flex;
+    min-height: 170px;
+    align-items: center;
+    justify-content: center;
+    color: #687f8a;
+    font-size: .8rem;
+    font-weight: 700;
+}
+
+@media (max-width: 680px) {
+    .ampi-tabs {
+        gap: 7px;
+        padding: 11px 12px;
+        overflow-x: auto;
+    }
+
+    .ampi-card .ampi-tab {
+        flex: 0 0 auto;
+        padding: 9px 12px;
+        font-size: .78rem;
+    }
+
+    .ampi-storm-summary,
+    .ampi-snow-summary,
+    .ampi-storm-note,
+    .ampi-snow-note {
+        padding-right: 13px;
+        padding-left: 13px;
+    }
+
+    .ampi-advanced-list {
+        width: auto;
+        padding: 9px;
+    }
+
+    .ampi-advanced-list .ampi-advanced-item {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .ampi-charts {
+        padding: 14px 10px 16px;
+    }
+
+    .ampi-chart-card h3 {
+        padding-right: 12px;
+        padding-left: 12px;
+        font-size: .86rem;
+    }
+
+    .ampi-chart {
+        overflow-x: auto;
+        padding-right: 3px;
+        padding-left: 3px;
+    }
+
+    .ampi-chart-svg {
+        width: 760px;
+        max-width: none;
+    }
+}
+
+
+/* === Ajustements v2.5 : jours colorés, vents par pas de 5, orages compacts === */
+.ampi-day-cell {
+    border-right-width: 2px !important;
+}
+.ampi-day-mon { background: #e5f1ff !important; border-right-color: #6da8e8 !important; color: #175a91 !important; }
+.ampi-day-tue { background: #e8f7ea !important; border-right-color: #72b67d !important; color: #246b36 !important; }
+.ampi-day-wed { background: #fff0df !important; border-right-color: #e6a45f !important; color: #8a4a08 !important; }
+.ampi-day-thu { background: #efe7fb !important; border-right-color: #9f7bd1 !important; color: #5e3a8b !important; }
+.ampi-day-fri { background: #e1f7f5 !important; border-right-color: #5ab7ad !important; color: #17675f !important; }
+.ampi-day-sat { background: #fbe8f2 !important; border-right-color: #d986ad !important; color: #8c3c63 !important; }
+.ampi-day-sun { background: #fff5ce !important; border-right-color: #d8ad3c !important; color: #7b5a00 !important; }
+
+.ampi-storm-table {
+    min-width: 1410px;
+}
+
+/* Date et heure restent visibles pendant le défilement horizontal. */
+.ampi-storm-table thead th:nth-child(1) {
+    position: sticky;
+    left: 0;
+    z-index: 8;
+    min-width: 70px;
+}
+.ampi-storm-table thead th:nth-child(2) {
+    position: sticky;
+    left: 70px;
+    z-index: 8;
+    min-width: 58px;
+    box-shadow: 4px 0 8px rgba(50, 31, 60, .08);
+}
+.ampi-storm-table tbody .ampi-day-cell {
+    position: sticky;
+    left: 0;
+    z-index: 6;
+    min-width: 70px;
+}
+.ampi-storm-table tbody .ampi-hour {
+    position: sticky;
+    left: 70px;
+    z-index: 5;
+    min-width: 58px;
+    background: #f8f4fb !important;
+    box-shadow: 4px 0 8px rgba(50, 31, 60, .06);
+}
+.ampi-storm-table tbody tr:hover .ampi-hour {
+    background: #eee4f5 !important;
+}
+
+.ampi-details-cell {
+    min-width: 178px;
+    padding: 6px 7px !important;
+    vertical-align: top;
+}
+.ampi-card .ampi-details-button {
+    width: 100%;
+    min-height: 29px;
+}
+.ampi-details-inline {
+    width: 100%;
+    margin-top: 7px;
+    padding: 0;
+    gap: 5px;
+}
+.ampi-details-inline[hidden] {
+    display: none !important;
+}
+.ampi-details-inline .ampi-advanced-item {
+    display: block;
+    padding: 6px 7px;
+    border-radius: 6px;
+    text-align: left;
+}
+.ampi-details-inline .ampi-advanced-label {
+    margin: 0 0 2px;
+    font-size: .64rem;
+    line-height: 1.15;
+    white-space: normal;
+}
+.ampi-details-inline .ampi-advanced-value {
+    font-size: .76rem;
+    line-height: 1.15;
+    white-space: nowrap;
+}
+
+.ampi-top-scroll {
+    height: 20px;
+    border-top: 1px solid #e2d6ea;
+}
+
+/* Teinte légère de la colonne Heure, assortie au jour. */
+.ampi-hour-mon { background: #f3f8ff !important; }
+.ampi-hour-tue { background: #f2faf3 !important; }
+.ampi-hour-wed { background: #fff8f0 !important; }
+.ampi-hour-thu { background: #f8f4fd !important; }
+.ampi-hour-fri { background: #f1fbfa !important; }
+.ampi-hour-sat { background: #fff5fa !important; }
+.ampi-hour-sun { background: #fffaf0 !important; }
+.ampi-storm-table tbody .ampi-hour-mon { background: #f3f8ff !important; }
+.ampi-storm-table tbody .ampi-hour-tue { background: #f2faf3 !important; }
+.ampi-storm-table tbody .ampi-hour-wed { background: #fff8f0 !important; }
+.ampi-storm-table tbody .ampi-hour-thu { background: #f8f4fd !important; }
+.ampi-storm-table tbody .ampi-hour-fri { background: #f1fbfa !important; }
+.ampi-storm-table tbody .ampi-hour-sat { background: #fff5fa !important; }
+.ampi-storm-table tbody .ampi-hour-sun { background: #fffaf0 !important; }
+
+/* === Altitude visible et profil neige expert === */
+.ampi-city-altitude {
+    display: inline-flex;
+    margin: 7px 0 4px;
+    padding: 5px 9px;
+    align-items: center;
+    border: 1px solid #c8dbe3;
+    border-radius: 999px;
+    background: #f2f8fa;
+    color: #245b70;
+    font-size: .76rem;
+    font-weight: 850;
+    line-height: 1.2;
+}
+.ampi-city-altitude.ampi-altitude-missing {
+    border-color: #e2ca84;
+    background: #fff7dd;
+    color: #795b05;
+}
+
+.ampi-snow-table {
+    min-width: 1260px;
+}
+
+.ampi-snow-wind {
+    min-width: 142px;
+    white-space: nowrap;
+}
+.ampi-snow-wind strong {
+    display: block;
+    margin-bottom: 5px;
+}
+.ampi-thickness {
+    min-width: 88px;
+    font-weight: 900;
+    color: #315f78;
+}
+
+.ampi-snow-details-cell {
+    min-width: 205px;
+}
+.ampi-snow-profile {
+    display: flex;
+    width: 100%;
+    margin-top: 7px;
+    padding: 0;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+}
+.ampi-snow-profile[hidden] {
+    display: none !important;
+}
+.ampi-profile-section {
+    display: block;
+    margin: 0;
+    padding: 7px;
+    border: 1px solid #c8dfe8;
+    border-radius: 7px;
+    background: #f8fcfe;
+}
+.ampi-profile-title {
+    display: block;
+    margin: 0 0 6px;
+    color: #175a76;
+    font-size: .7rem;
+    font-weight: 900;
+}
+.ampi-profile-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.ampi-profile-item {
+    display: flex;
+    padding: 4px 5px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-radius: 5px;
+    background: #fff;
+}
+.ampi-profile-label {
+    color: #59717c;
+    font-size: .66rem;
+    font-weight: 800;
+}
+.ampi-profile-value {
+    color: #123f53;
+    font-size: .74rem;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+/* La date et l'heure restent lisibles dans le tableau neige aussi. */
+.ampi-snow-table thead th:nth-child(1) {
+    position: sticky;
+    left: 0;
+    z-index: 8;
+    min-width: 70px;
+}
+.ampi-snow-table thead th:nth-child(2) {
+    position: sticky;
+    left: 70px;
+    z-index: 8;
+    min-width: 58px;
+    box-shadow: 4px 0 8px rgba(20, 78, 104, .08);
+}
+.ampi-snow-table tbody .ampi-day-cell {
+    position: sticky;
+    left: 0;
+    z-index: 6;
+    min-width: 70px;
+}
+.ampi-snow-table tbody .ampi-hour {
+    position: sticky;
+    left: 70px;
+    z-index: 5;
+    min-width: 58px;
+    box-shadow: 4px 0 8px rgba(20, 78, 104, .06);
+}
+
+
+/* === Diagrammes AROME-PI modernisés === */
+.ampi-charts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    padding: 24px 20px 28px;
+    background:
+        radial-gradient(circle at top left, rgba(45, 137, 184, .07), transparent 38%),
+        #f5f9fb;
+}
+
+.ampi-chart-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #d7e5ec;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfdfe 100%);
+    box-shadow: 0 10px 28px rgba(20, 67, 94, .09);
+}
+
+.ampi-chart-card::before {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #2487b2, #60b8d5 45%, #9bcddd);
+    content: "";
+}
+
+.ampi-chart-card h3 {
+    margin: 0;
+    padding: 18px 18px 7px;
+    color: #123e57;
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1.3;
+}
+
+.ampi-chart-total {
+    margin: 0 18px 4px;
+    color: #126d9c;
+    font-size: .78rem;
+    font-weight: 900;
+}
+
+.ampi-chart {
+    min-height: 260px;
+    padding: 4px 12px 14px;
+}
+
+.ampi-chart-metrics {
+    display: flex;
+    gap: 7px;
+    margin: 2px 4px 8px;
+    flex-wrap: wrap;
+}
+
+.ampi-chart-metric {
+    display: inline-flex;
+    min-height: 28px;
+    padding: 5px 9px;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #dce8ee;
+    border-radius: 999px;
+    background: #f6fafc;
+    color: #466573;
+    font-size: .69rem;
+    font-weight: 800;
+}
+
+.ampi-chart-metric-label {
+    color: #6d8792;
+    font-weight: 750;
+}
+
+.ampi-chart-metric-value {
+    color: #173f55;
+    font-weight: 950;
+}
+
+.ampi-chart-viewport {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #a9c7d5 transparent;
+}
+
+.ampi-chart-svg {
+    display: block;
+    width: 100%;
+    min-width: 660px;
+    height: auto;
+    min-height: 235px;
+    overflow: visible;
+}
+
+.ampi-chart-grid {
+    stroke: rgba(96, 128, 143, .22);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+}
+
+.ampi-chart-grid-vertical {
+    stroke-dasharray: 3 6;
+    opacity: .55;
+}
+
+.ampi-chart-axis {
+    fill: #617985;
+    font: 750 11px/1 Inter, "Segoe UI", Arial, sans-serif;
+}
+
+.ampi-chart-xaxis {
+    fill: #486575;
+    font-size: 10px;
+    font-weight: 850;
+}
+
+.ampi-chart-legend-text {
+    fill: #3d5968;
+    font-weight: 850;
+}
+
+.ampi-chart-line {
+    stroke-width: 3.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+    filter: drop-shadow(0 1px 1px rgba(21, 56, 73, .12));
+}
+
+.ampi-chart-point {
+    stroke: #fff;
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+    cursor: help;
+}
+
+.ampi-chart-value-label {
+    paint-order: stroke;
+    stroke: #fff;
+    stroke-width: 4px;
+    stroke-linejoin: round;
+    font: 900 11px/1 Inter, "Segoe UI", Arial, sans-serif;
+}
+
+.ampi-chart-area {
+    stroke: none !important;
+    opacity: .14;
+}
+
+.ampi-series-temperature { stroke: #df6c2f; }
+.ampi-chart-area.ampi-series-temperature { fill: #f2a06e; opacity: .18; }
+.ampi-chart-value-label.ampi-series-temperature { fill: #b44b17; }
+
+.ampi-series-pressure { stroke: #6758b3; }
+.ampi-chart-area.ampi-series-pressure { fill: #9185cf; opacity: .14; }
+.ampi-chart-value-label.ampi-series-pressure { fill: #514593; }
+
+.ampi-series-wind { stroke: #197e91; }
+.ampi-series-gust { stroke: #db7b25; }
+.ampi-chart-wind-envelope {
+    fill: #e8b16f;
+    opacity: .16;
+    stroke: none;
+}
+
+.ampi-series-rain-cumulative { stroke: #316b9d; }
+.ampi-chart-rain-bar { fill: #5cb8de; }
+.ampi-chart-rain-trace { fill: #9bd6ed; }
+.ampi-chart-rain-light { fill: #62bfe4; }
+.ampi-chart-rain-moderate { fill: #318fc8; }
+.ampi-chart-rain-strong { fill: #2667b2; }
+.ampi-chart-rain-intense { fill: #6551a8; }
+
+.ampi-chart-day-band {
+    pointer-events: none;
+    opacity: .42;
+}
+.ampi-dayband-mon { fill: #eaf4ff; }
+.ampi-dayband-tue { fill: #edf8ef; }
+.ampi-dayband-wed { fill: #fff4e8; }
+.ampi-dayband-thu { fill: #f4edfc; }
+.ampi-dayband-fri { fill: #eaf9f7; }
+.ampi-dayband-sat { fill: #fceef5; }
+.ampi-dayband-sun { fill: #fff8dc; }
+.ampi-dayband-other { fill: #f5f7f8; }
+
+.ampi-chart-day-label {
+    font: 900 10px/1 Inter, "Segoe UI", Arial, sans-serif;
+    letter-spacing: .02em;
+    text-transform: capitalize;
+}
+.ampi-daylabel-mon { fill: #3978b2; }
+.ampi-daylabel-tue { fill: #397b47; }
+.ampi-daylabel-wed { fill: #9a5d18; }
+.ampi-daylabel-thu { fill: #6f4c9b; }
+.ampi-daylabel-fri { fill: #28756e; }
+.ampi-daylabel-sat { fill: #9c4a72; }
+.ampi-daylabel-sun { fill: #846614; }
+.ampi-daylabel-other { fill: #647b87; }
+
+.ampi-chart-empty {
+    min-height: 230px;
+    border: 1px dashed #d5e1e7;
+    border-radius: 12px;
+    background: #fafcfd;
+}
+
+@media (max-width: 1040px) {
+    .ampi-charts {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 680px) {
+    .ampi-charts {
+        gap: 14px;
+        padding: 14px 9px 18px;
+    }
+
+    .ampi-chart-card {
+        border-radius: 14px;
+    }
+
+    .ampi-chart-card h3 {
+        padding: 15px 13px 7px;
+        font-size: .9rem;
+    }
+
+    .ampi-chart-total {
+        margin-right: 13px;
+        margin-left: 13px;
+    }
+
+    .ampi-chart {
+        min-height: 245px;
+        padding: 3px 6px 10px;
+        overflow: visible;
+    }
+
+    .ampi-chart-metrics {
+        margin-right: 6px;
+        margin-left: 6px;
+    }
+
+    .ampi-chart-metric {
+        padding: 4px 8px;
+        font-size: .65rem;
+    }
+
+    .ampi-chart-viewport {
+        border-radius: 10px;
+    }
+
+    .ampi-chart-svg {
+        width: 760px;
+        min-width: 760px;
+        max-width: none;
+    }
+}
+
+/* === v2.8 : grands diagrammes + vraies infobulles + géolocalisation === */
+.ampi-charts {
+    grid-template-columns: 1fr !important;
+    gap: 24px;
+    padding: 26px 20px 30px;
+}
+
+.ampi-chart-card {
+    width: 100%;
+}
+
+.ampi-chart-card h3 {
+    padding: 20px 20px 8px;
+    font-size: 1.08rem;
+}
+
+.ampi-chart-total {
+    margin-right: 20px;
+    margin-left: 20px;
+    font-size: .86rem;
+}
+
+.ampi-chart {
+    min-height: 420px;
+    padding: 6px 16px 18px;
+}
+
+.ampi-chart-metrics {
+    gap: 9px;
+    margin: 4px 8px 12px;
+}
+
+.ampi-chart-metric {
+    min-height: 32px;
+    padding: 6px 11px;
+    font-size: .76rem;
+}
+
+.ampi-chart-viewport {
+    position: relative;
+    min-height: 390px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.ampi-chart-svg {
+    display: block;
+    width: 100%;
+    min-width: 900px;
+    min-height: 390px;
+    max-width: none;
+}
+
+.ampi-chart-axis {
+    font-size: 13px;
+}
+
+.ampi-chart-xaxis {
+    font-size: 12px;
+}
+
+.ampi-chart-day-label {
+    font-size: 12px;
+}
+
+.ampi-chart-legend-text {
+    font-size: 12px;
+}
+
+.ampi-chart-line {
+    stroke-width: 3.6;
+}
+
+.ampi-chart-point {
+    transition: r .12s ease, filter .12s ease;
+    cursor: crosshair;
+}
+
+.ampi-chart-point:hover,
+.ampi-chart-point:focus {
+    r: 7.2px;
+    outline: none;
+    filter: drop-shadow(0 0 4px rgba(20, 62, 83, .32));
+}
+
+.ampi-chart-rain-bar {
+    cursor: crosshair;
+}
+
+.ampi-chart-rain-bar:hover,
+.ampi-chart-rain-bar:focus {
+    outline: none;
+    filter: brightness(.92) drop-shadow(0 2px 3px rgba(20, 62, 83, .22));
+}
+
+.ampi-chart-tooltip {
+    position: absolute;
+    z-index: 40;
+    max-width: 260px;
+    padding: 8px 11px;
+    border: 1px solid rgba(12, 70, 101, .16);
+    border-radius: 9px;
+    background: rgba(14, 49, 69, .96);
+    box-shadow: 0 8px 24px rgba(5, 37, 55, .22);
+    color: #fff;
+    font: 800 12px/1.35 Inter, "Segoe UI", Arial, sans-serif;
+    white-space: nowrap;
+    pointer-events: none;
+    transform: translateY(-100%);
+}
+
+.ampi-card .ampi-locate-button {
+    display: inline-flex;
+    min-height: 36px;
+    margin: 8px 0 0;
+    padding: 7px 12px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #8dbdd1;
+    border-radius: 9px;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(7, 59, 99, .06);
+    color: #0b628f;
+    font: 850 .78rem/1.15 Inter, "Segoe UI", Arial, sans-serif;
+    cursor: pointer;
+}
+
+.ampi-card .ampi-locate-button:hover,
+.ampi-card .ampi-locate-button:focus-visible {
+    outline: none;
+    border-color: #277fa8;
+    background: #eaf7fc;
+}
+
+.ampi-card .ampi-locate-button:disabled,
+.ampi-card .ampi-locate-button.is-loading {
+    opacity: .65;
+    cursor: wait;
+}
+
+/* Le bouton ajoute de la hauteur sous le champ : la liste de résultats descend. */
+.ampi-search-results {
+    top: 116px;
+}
+
+@media (max-width: 680px) {
+    .ampi-charts {
+        gap: 18px;
+        padding: 16px 8px 20px;
+    }
+
+    .ampi-chart-card h3 {
+        padding: 16px 13px 7px;
+        font-size: .95rem;
+    }
+
+    .ampi-chart {
+        min-height: 390px;
+        padding: 4px 6px 12px;
+    }
+
+    .ampi-chart-viewport {
+        min-height: 360px;
+    }
+
+    .ampi-chart-svg {
+        width: 1050px;
+        min-width: 1050px;
+        min-height: 360px;
+    }
+
+    .ampi-chart-tooltip {
+        font-size: 11px;
+    }
+
+    .ampi-card .ampi-locate-button {
+        width: 100%;
+    }
+}
+
+
+/* v2.8.1 — graphiques en traits uniquement, sans zones remplies */
+.ampi-chart-area,
+.ampi-chart-wind-envelope {
+    display: none !important;
+    fill: none !important;
+    opacity: 0 !important;
+}
+
+.ampi-chart-line {
+    stroke-width: 2.35 !important;
+    filter: none !important;
+}
+
+.ampi-chart-point {
+    r: 4px;
+    fill: #fff !important;
+    stroke-width: 2.2 !important;
+}
+
+.ampi-chart-point.ampi-series-temperature { stroke: #df6c2f !important; }
+.ampi-chart-point.ampi-series-pressure { stroke: #6758b3 !important; }
+.ampi-chart-point.ampi-series-wind { stroke: #197e91 !important; }
+.ampi-chart-point.ampi-series-gust { stroke: #db7b25 !important; }
+.ampi-chart-point.ampi-series-rain-cumulative { stroke: #316b9d !important; }
+
+.ampi-chart-day-band {
+    opacity: .20 !important;
+}
+
+
+/* v2.8.2 — correctif définitif des courbes SVG */
+.ampi-chart-svg path.ampi-chart-line,
+.ampi-chart-svg .ampi-chart-line {
+    fill: none !important;
+}
+
+/* Le cumul des précipitations est centré sous le titre du graphique. */
+.ampi-chart-card .ampi-chart-total {
+    width: auto;
+    margin: 4px auto 8px !important;
+    padding: 0 16px;
+    text-align: center !important;
+}
+
+.ampi-plugin-version {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 8px;
+    border: 1px solid #cfdde4;
+    border-radius: 999px;
+    background: #f7fafb;
+    color: #607985;
+    font-size: .68rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+
+/* v2.8.3 — journées nettement identifiables dans les diagrammes */
+.ampi-chart-day-band {
+    opacity: .38 !important;
+}
+
+.ampi-chart-day-strip {
+    pointer-events: none;
+    opacity: .94;
+}
+.ampi-daystrip-mon { fill: #9cc9f3; }
+.ampi-daystrip-tue { fill: #9bd3a5; }
+.ampi-daystrip-wed { fill: #f5bd7c; }
+.ampi-daystrip-thu { fill: #c3a7e5; }
+.ampi-daystrip-fri { fill: #8ed4cb; }
+.ampi-daystrip-sat { fill: #e9a9c8; }
+.ampi-daystrip-sun { fill: #efd26e; }
+.ampi-daystrip-other { fill: #c8d4da; }
+
+.ampi-chart-day-separator {
+    pointer-events: none;
+    stroke-width: 2.2;
+    stroke-dasharray: 5 4;
+    opacity: .72;
+}
+.ampi-dayseparator-mon { stroke: #4c8bc5; }
+.ampi-dayseparator-tue { stroke: #4c925a; }
+.ampi-dayseparator-wed { stroke: #c57a25; }
+.ampi-dayseparator-thu { stroke: #7f5cac; }
+.ampi-dayseparator-fri { stroke: #388d83; }
+.ampi-dayseparator-sat { stroke: #b25f87; }
+.ampi-dayseparator-sun { stroke: #ad8617; }
+.ampi-dayseparator-other { stroke: #8399a3; }
+
+.ampi-chart-day-label {
+    font-size: 12px !important;
+    font-weight: 950 !important;
+    letter-spacing: .035em !important;
+    paint-order: stroke;
+    stroke: rgba(255,255,255,.82);
+    stroke-width: 2px;
+    stroke-linejoin: round;
+}
+
+@media (max-width: 720px) {
+    .ampi-chart-day-label {
+        font-size: 11px !important;
+    }
+}
+/* v2.8.5 — courbes simplifiées : sans points visibles, jours plus gros, meilleure échelle */
+.ampi-chart-value-label {
+    display: none !important;
+}
+
+.ampi-chart-point,
+.ampi-chart-hitpoint {
+    vector-effect: non-scaling-stroke;
+}
+
+.ampi-chart-point {
+    display: none !important;
+}
+
+.ampi-chart-hitpoint {
+    fill: transparent !important;
+    stroke: none !important;
+    opacity: 0 !important;
+    pointer-events: all !important;
+}
+
+.ampi-chart-line {
+    fill: none !important;
+    stroke-width: 2.8 !important;
+}
+
+.ampi-chart-day-strip {
+    height: 46px;
+    opacity: 1 !important;
+}
+
+.ampi-chart-day-label {
+    font-size: 24px !important;
+    font-weight: 1000 !important;
+    letter-spacing: .01em !important;
+    stroke-width: 3px !important;
+}
+
+.ampi-chart-axis {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+}
+
+.ampi-chart-xaxis {
+    font-size: 15px !important;
+}
+
+.ampi-chart-grid {
+    opacity: .72;
+}
+
+@media (max-width: 900px) {
+    .ampi-chart-day-label {
+        font-size: 19px !important;
+    }
+    .ampi-chart-axis {
+        font-size: 14px !important;
+    }
+    .ampi-chart-xaxis {
+        font-size: 13px !important;
+    }
+}
+
+
+/* v2.8.7 — échelle pluie pilotée par le cumul + plus d'air en haut des courbes */
+.ampi-chart-day-label {
+    font-size: 26px !important;
+    font-weight: 1000 !important;
+}
+
+.ampi-chart-day-strip {
+    opacity: 1 !important;
+}
+
+@media (max-width: 900px) {
+    .ampi-chart-day-label {
+        font-size: 20px !important;
+    }
+}
+
+/* Module AROME-PI unique : la carte partage la carte principale et ses onglets. */
+.ampi-map-panel {
+    padding: 0 !important;
+}
+
+.ampi-map-panel > .ampim-card {
+    margin: 0;
+    max-width: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+}
+
+.ampi-map-panel .ampim-header,
+.ampi-map-panel .ampim-card > .ampi-footer {
+    display: none;
+}
+
+.ampi-map-panel .ampim-toolbar {
+    border-radius: 0;
+}
+
+.ampi-tab-map {
+    color: #173f78;
+}
+

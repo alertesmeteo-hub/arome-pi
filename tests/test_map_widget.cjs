@@ -25,7 +25,7 @@ class Element {
     constructor(tagName = 'div') {
         this.tagName = tagName.toUpperCase();
         this.dataset = {};
-        this.style = {};
+        this.style = { setProperty(name, value) { this[name] = String(value); } };
         this.hidden = false;
         this.disabled = false;
         this.textContent = '';
@@ -58,7 +58,7 @@ class Element {
     querySelectorAll(selector) {
         const found = [];
         const visit = element => {
-            if (selector === '[data-amfm-layer-key]' && element.dataset.amfmLayerKey) {
+            if (selector === '[data-ampim-layer-key]' && element.dataset.ampimLayerKey) {
                 found.push(element);
             }
             for (const child of element.children || []) visit(child);
@@ -68,7 +68,7 @@ class Element {
     }
 }
 
-const expectWebgl = process.env.AMFM_DISABLE_WEBGL !== '1';
+const expectWebgl = process.env.AMPIM_DISABLE_WEBGL !== '1';
 const counters = { draws: 0, textures: 0, fallbackImages: 0, strokes: 0, labels: 0 };
 
 function make2dContext() {
@@ -155,14 +155,14 @@ app.dataset = {
     timezone: 'Europe/Paris', moduleVersion: '1.0.0', animation: '1'
 };
 app.querySelector = selector => {
-    const match = selector.match(/^\[data-amfm-([^\]]+)\]$/);
+    const match = selector.match(/^\[data-ampim-([^\]]+)\]$/);
     return match ? elements[match[1]] : null;
 };
 
 const documentListeners = {};
 const documentMock = {
     readyState: 'complete', fullscreenElement: null,
-    querySelectorAll(selector) { return selector === '[data-amfm-app]' ? [app] : []; },
+    querySelectorAll(selector) { return selector === '[data-ampim-app]' ? [app] : []; },
     createElement(tagName) {
         return String(tagName).toLowerCase() === 'canvas'
             ? new Canvas('sampler') : new Element(tagName);
@@ -289,7 +289,7 @@ const context = {
     clearTimeout, setInterval, clearInterval, setImmediate
 };
 
-const scriptPath = path.resolve(__dirname, '../wordpress/arome-meteofrance-france/assets/arome-map.js');
+const scriptPath = path.resolve(__dirname, '../wordpress/arome-pi/assets/arome-map.js');
 vm.runInNewContext(fs.readFileSync(scriptPath, 'utf8'), context, { filename: scriptPath });
 
 (async () => {
@@ -316,7 +316,7 @@ vm.runInNewContext(fs.readFileSync(scriptPath, 'utf8'), context, { filename: scr
     elements.viewport.dispatch('pointerleave', { pointerId: 0, pointerType: 'mouse' });
     assert.equal(elements.probe.hidden, true);
 
-    app.dispatch('amfm:focus-location', {
+    app.dispatch('ampim:focus-location', {
         detail: { latitude: 42.699, longitude: 2.9045, scale: 32 }
     });
     await new Promise(resolve => setTimeout(resolve, 20));
@@ -357,3 +357,4 @@ vm.runInNewContext(fs.readFileSync(scriptPath, 'utf8'), context, { filename: scr
     console.error(error);
     process.exitCode = 1;
 });
+
