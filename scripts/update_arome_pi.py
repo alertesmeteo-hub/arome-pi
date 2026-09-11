@@ -444,6 +444,32 @@ def api_resources(session: requests.Session) -> list[Resource]:
         len(coverage_bases),
         ", ".join(coverage_bases),
     )
+    diagnostic_fields = (
+        "TOTAL_PRECIPITATION_RATE__",
+        "TOTAL_PRECIPITATION__",
+        "TOTAL_WATER_PRECIPITATION__",
+        "TEMPERATURE__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND",
+        "RELATIVE_HUMIDITY__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND",
+        "PRESSURE__SEA_SURFACE",
+        "LOW_CLOUD_COVER__",
+        "VISIBILITY_MINI_15MIN__",
+    )
+    coverage_templates = sorted(
+        {
+            re.sub(
+                r"___\d{4}-\d{2}-\d{2}T\d{2}\.\d{2}\.\d{2}Z",
+                "___{run}",
+                coverage,
+            )
+            for coverage in coverage_ids
+            if coverage.startswith(diagnostic_fields)
+        }
+    )
+    LOGGER.info(
+        "Gabarits WCS prioritaires (%s) : %s",
+        len(coverage_templates),
+        ", ".join(coverage_templates),
+    )
     resources: list[Resource] = []
     for group, (field_name, height) in API_FIELDS.items():
         pattern = re.compile(
