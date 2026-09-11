@@ -526,7 +526,12 @@ def choose_resources(
             f"contient les champs essentiels de +01 h à +{forecast_hours:02d} h "
             f"(par run : {'; '.join(inventories) or 'aucune ressource'})"
         )
-    _date, run_text, selection = max(candidates, key=lambda item: item[0])
+    candidates.sort(key=lambda item: item[0])
+    # Le réseau le plus récent apparaît dans GetCapabilities avant que toutes
+    # ses échéances soient effectivement téléchargeables. Le réseau précédent
+    # est complet et évite les 404 observées pendant cette synchronisation.
+    selected_index = -2 if len(candidates) > 1 and candidates[-1][1] != "local" else -1
+    _date, run_text, selection = candidates[selected_index]
     return selection, parse_run_text(None if run_text == "local" else run_text)
 
 

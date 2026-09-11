@@ -53,7 +53,7 @@ class AromePipelineTests(unittest.TestCase):
         ):
             choose_resources(resources, 2)
 
-    def test_resource_selection_uses_latest_complete_run(self) -> None:
+    def test_resource_selection_uses_previous_stable_run(self) -> None:
         older = "2026-08-21T06:00:00Z"
         latest = "2026-08-21T09:00:00Z"
         resources = []
@@ -64,9 +64,9 @@ class AromePipelineTests(unittest.TestCase):
                 for lead in range(1, 3)
             )
         selected, run_time = choose_resources(resources, 2)
-        self.assertEqual(run_time, datetime(2026, 8, 21, 9, tzinfo=timezone.utc))
-        self.assertEqual(selected["GUST_U", 2].run_text, latest)
-        self.assertEqual(selected["REFLECTIVITY", 1].run_text, latest)
+        self.assertEqual(run_time, datetime(2026, 8, 21, 6, tzinfo=timezone.utc))
+        self.assertEqual(selected["GUST_U", 2].run_text, older)
+        self.assertEqual(selected["REFLECTIVITY", 1].run_text, older)
 
     def test_catalog_retry_accepts_run_after_transient_replacement(self) -> None:
         old = "2026-08-21T06:00:00Z"
