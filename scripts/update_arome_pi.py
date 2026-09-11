@@ -39,7 +39,7 @@ from arome_maps import DEFAULT_BOUNDS, AromeMapRenderer
 
 
 LOGGER = logging.getLogger("arome.pi")
-PIPELINE_VERSION = "1.0.1-aromepi"
+PIPELINE_VERSION = "1.0.2-aromepi"
 API_ROOT = (
     "https://public-api.meteofrance.fr/public/aromepi/1.0/wcs/"
     "MF-NWP-HIGHRES-AROMEPI-001-FRANCE-WCS"
@@ -437,12 +437,17 @@ def api_resources(session: requests.Session) -> list[Resource]:
                 continue
             run_raw = match.group(1)
             run_text = run_raw.replace(".", ":", 2)
+            run_time = datetime.fromisoformat(run_text.replace("Z", "+00:00"))
             for lead in range(7):
+                valid_time = iso_utc(run_time + timedelta(hours=lead))
                 query: list[tuple[str, str]] = [
                     ("service", "WCS"),
                     ("version", "2.0.1"),
                     ("coverageid", coverage),
-                    ("subset", f"time({lead * 3600})"),
+                    # Le catalogue AROME-PI annonce le réseau dans le
+                    # CoverageId. Le sous-ensemble temporel attend la date de
+                    # validité ISO, plus fiable ici que l'offset numérique.
+                    ("subset", f"time({valid_time})"),
                 ]
                 if height is not None:
                     query.append(("subset", f"height({height})"))
