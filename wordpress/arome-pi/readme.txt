@@ -3,7 +3,7 @@ Contributors: alertesmeteo
 Tags: meteo, arome-pi, meteofrance, prevision-immediate, avada
 Requires at least: 5.8
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,6 +25,10 @@ AROME-PI est actualisé chaque heure et vise la prévision immédiate jusqu'à 6
 4. Insérez [aromepi_meteo] dans un élément Code ou Shortcode Avada.
 
 == Changelog ==
+
+= 1.0.2 =
+* Source affichée corrigée vers l'API officielle AROME Prévision Immédiate.
+* Publication limitée aux champs réellement disponibles ; colonnes absentes conservées à null.
 
 = 1.0.1 =
 * Reconstruction complète depuis le module AROME v1.2.6 fourni par l'administrateur.

@@ -39,7 +39,7 @@ from arome_maps import DEFAULT_BOUNDS, AromeMapRenderer
 
 
 LOGGER = logging.getLogger("arome.pi")
-PIPELINE_VERSION = "1.0.0-aromepi"
+PIPELINE_VERSION = "1.0.1-aromepi"
 API_ROOT = (
     "https://public-api.meteofrance.fr/public/aromepi/1.0/wcs/"
     "MF-NWP-HIGHRES-AROMEPI-001-FRANCE-WCS"
@@ -51,16 +51,13 @@ DEFAULT_CURRENT_METADATA_URL = (
 )
 USER_AGENT = "alertes-meteo.com/arome-pi/1.0"
 
-# Sept champs essentiels × sept échéances (0 à 6 h) : 49 téléchargements,
-# conformément à la limite officielle de 50 appels par minute.
+# L'API AROME-PI publie actuellement ces trois champs exploitables à toutes les
+# échéances. Les autres colonnes du schéma v3 restent à null : elles ne doivent
+# jamais être remplacées par des valeurs issues de l'AROME classique.
 API_FIELDS = {
-    "RAIN": ("TOTAL_PRECIPITATION__GROUND_OR_WATER_SURFACE", None),
     "GUST_U": ("U_COMPONENT_OF_WIND_GUST_15MIN__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND", 10),
     "GUST_V": ("V_COMPONENT_OF_WIND_GUST_15MIN__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND", 10),
-    "GUST": ("WIND_SPEED_GUST_15MIN__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND", 10),
     "REFLECTIVITY": ("REFLECTIVITY_MAX_DBZ__GROUND_OR_WATER_SURFACE", None),
-    "SOLID": ("SOLID_PRECIPITATION__GROUND_OR_WATER_SURFACE", None),
-    "PRECIP_TYPE": ("SEVERE_PRECIPITATION_TYPE_15_MIN__GROUND_OR_WATER_SURFACE", None),
 }
 
 # Grille EURW1S100 documentée par Météo-France et vérifiée sur les GRIB2.

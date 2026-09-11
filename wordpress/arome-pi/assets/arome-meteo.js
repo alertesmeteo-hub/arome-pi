@@ -1471,7 +1471,7 @@
             if (altitudeLine) {
                 altitudeLine.textContent = finite(altitude)
                     ? 'Altitude de ' + cityName + ' : ≈ ' + formatNumber(altitude, 0) + ' m (point de grille AROME-PI)'
-                    : 'Altitude de ' + cityName + ' : — (relancez le workflow GitHub AROME-PI v1.0.0)';
+                    : 'Altitude de ' + cityName + ' : — (relancez le workflow GitHub AROME-PI)';
                 altitudeLine.classList.toggle('ampi-altitude-missing', !finite(altitude));
             }
             selectedMapFocus = {

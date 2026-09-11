@@ -3,7 +3,7 @@
  * Plugin Name: AROME-PI Météo-France France — Tableaux et cartes
  * Plugin URI: https://github.com/alertesmeteo-hub/arome-pi
  * Description: Module unique de cartes interactives et de prévisions AROME-PI de Météo-France pour la France métropolitaine et la Corse.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: Alertes Météo Hub
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('AMPI_VERSION', '1.0.1');
+define('AMPI_VERSION', '1.0.2');
 define('AMPI_RELEASE_DATE', '10/09/2026');
 define('AMPI_OPTION_BASE_URL', 'ampi_national_data_base_url');
 define(
@@ -489,7 +489,7 @@ function ampi_render_map_shortcode($atts) {
             <span data-ampim-generated>Mise à jour en cours de lecture…</span>
             <span>
                 Données météo directes :
-                <a href="https://www.data.gouv.fr/datasets/paquets-arome-resolution-0-01deg" target="_blank" rel="noopener noreferrer">AROME-PI 0,01° — Météo-France</a>
+                <a href="https://www.data.gouv.fr/dataservices/api-modele-arome-prevision-immediate" target="_blank" rel="noopener noreferrer">API AROME Prévision Immédiate — Météo-France</a>
                 • <a href="https://www.alertes-meteo.com/" target="_blank" rel="noopener noreferrer">www.alertes-meteo.com</a>
                 • Module cartes v<?php echo esc_html(AMPI_VERSION); ?> (<?php echo esc_html(AMPI_RELEASE_DATE); ?>)
             </span>
@@ -774,7 +774,7 @@ function ampi_render_shortcode($atts) {
             <span data-ampi-generated>Mise à jour en cours de lecture…</span>
             <span>
                 Données météo directes :
-                <a href="https://www.data.gouv.fr/datasets/paquets-arome-resolution-0-01deg" target="_blank" rel="noopener noreferrer">AROME-PI 0,01° — Météo-France</a>
+                <a href="https://www.data.gouv.fr/dataservices/api-modele-arome-prevision-immediate" target="_blank" rel="noopener noreferrer">API AROME Prévision Immédiate — Météo-France</a>
                 • Recherche des communes :
                 <a href="https://geo.api.gouv.fr/decoupage-administratif/communes" target="_blank" rel="noopener noreferrer">API officielle française</a>
                 • <a href="https://www.alertes-meteo.com/" target="_blank" rel="noopener noreferrer">www.alertes-meteo.com</a>

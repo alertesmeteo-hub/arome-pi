@@ -87,7 +87,7 @@
         var baseUrl = (app.dataset.baseUrl || '').replace(/\/+$/, '');
         var requestedLayer = app.dataset.variable || 'temperature';
         var timezone = app.dataset.timezone || 'Europe/Paris';
-        var moduleVersion = app.dataset.moduleVersion || '1.0.0';
+        var moduleVersion = app.dataset.moduleVersion || '1.0.2';
         var animationEnabled = app.dataset.animation !== '0';
         var reducedMotion = window.matchMedia &&
             window.matchMedia('(prefers-reduced-motion: reduce)').matches;

@@ -61,7 +61,7 @@ jobs:
           assert index["status"] == "ok"
           assert index["coverage"]["communes"] == 34746
           assert index["coverage"]["departments"] == 96
-          assert len(maps["layers"]) >= 20
+          assert len(maps["layers"]) >= 2
           assert len(maps["steps"]) >= 7
           assert (root / "departements/66.json").is_file()
           print(
