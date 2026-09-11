@@ -354,8 +354,9 @@ vm.runInNewContext(scriptSource, context, { filename: scriptPath });
     assert.equal(elements['zoom-level'].textContent, '6400 %');
     assert.equal(elements['zoom-in'].disabled, true);
     assert.ok(
-        !scriptSource.includes('entry.department && transform.scale > 3.2'),
-        'Les limites départementales doivent rester visibles à fort zoom'
+        scriptSource.includes('entry.department && transform.scale > 14') &&
+        scriptSource.includes('(24 - transform.scale) / 10'),
+        'Les limites départementales doivent être atténuées progressivement aux zooms extrêmes'
     );
     console.log(`Widget cartographique: ${expectWebgl ? 'WebGL' : 'Canvas de secours'}, valeur au survol et zoom 6400 % OK`);
 })().catch(error => {
