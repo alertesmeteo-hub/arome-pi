@@ -1451,11 +1451,11 @@ def main() -> int:
     catalog = load_catalog(Path(args.catalog))
     session = requests.Session()
     session.headers.update({"User-Agent": USER_AGENT})
-    api_token = os.getenv("METEOFRANCE_API_TOKEN", "").strip()
-    if not args.resource_directory and not api_token:
-        raise RuntimeError("Le secret METEOFRANCE_API_TOKEN est absent")
-    if api_token:
-        session.headers.update({"Authorization": f"Bearer {api_token}"})
+    api_key = os.getenv("METEOFRANCE_API_KEY", "").strip()
+    if not args.resource_directory and not api_key:
+        raise RuntimeError("Le secret METEOFRANCE_API_KEY est absent")
+    if api_key:
+        session.headers.update({"apikey": api_key})
     if args.resource_directory:
         discovered = local_resources(Path(args.resource_directory))
         resources, run_hint = choose_resources(discovered, args.forecast_hours)

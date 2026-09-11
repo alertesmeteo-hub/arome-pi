@@ -18,7 +18,7 @@ prévisions dans la branche `data`.
 - Horizon : 0 à 6 heures
 - Actualisation : chaque heure, à la minute 27
 - Lancement manuel : `workflow_dispatch`
-- Secret requis : `METEOFRANCE_API_TOKEN`
+- Secret requis : `METEOFRANCE_API_KEY`
 
 L'API AROME-PI expose surtout les précipitations, rafales et diagnostics de
 temps sensible. Les colonnes du schéma v3 qui ne sont pas fournies par cette
