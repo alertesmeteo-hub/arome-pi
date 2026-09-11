@@ -782,7 +782,7 @@ def parse_grib_files(
     map_values: dict[str, np.ndarray] = {}
     run_time: datetime | None = None
     valid_time: datetime | None = None
-    observed_lead: int | None = None
+    observed_lead: float | None = None
 
     for path in paths:
         with path.open("rb") as handle:
@@ -800,7 +800,13 @@ def parse_grib_files(
                     )
                     end_step = safe_get(gid, "endStep")
                     if end_step is not None:
-                        observed_lead = int(end_step)
+                        raw_step = str(end_step).strip().lower()
+                        if raw_step.endswith("m"):
+                            observed_lead = float(raw_step[:-1]) / 60.0
+                        elif raw_step.endswith("h"):
+                            observed_lead = float(raw_step[:-1])
+                        else:
+                            observed_lead = float(raw_step)
                     point_values[field] = grid.extract(gid)
                     map_values[field] = map_sampler.extract(gid, grid)
                 finally:
@@ -808,7 +814,7 @@ def parse_grib_files(
 
     if not point_values:
         raise RuntimeError(f"Aucun champ AROME-PI reconnu à l'échéance +{lead_hour:02d} h")
-    if observed_lead is not None and observed_lead != lead_hour:
+    if observed_lead is not None and not math.isclose(observed_lead, lead_hour):
         raise RuntimeError(
             f"Échéance GRIB incohérente : +{observed_lead} h au lieu de +{lead_hour} h"
         )
