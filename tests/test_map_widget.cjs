@@ -290,7 +290,8 @@ const context = {
 };
 
 const scriptPath = path.resolve(__dirname, '../wordpress/arome-pi/assets/arome-map.js');
-vm.runInNewContext(fs.readFileSync(scriptPath, 'utf8'), context, { filename: scriptPath });
+const scriptSource = fs.readFileSync(scriptPath, 'utf8');
+vm.runInNewContext(scriptSource, context, { filename: scriptPath });
 
 (async () => {
     await new Promise(resolve => setTimeout(resolve, 60));
@@ -352,6 +353,10 @@ vm.runInNewContext(fs.readFileSync(scriptPath, 'utf8'), context, { filename: scr
     for (let index = 0; index < 15; index += 1) elements['zoom-in'].click();
     assert.equal(elements['zoom-level'].textContent, '6400 %');
     assert.equal(elements['zoom-in'].disabled, true);
+    assert.ok(
+        !scriptSource.includes('entry.department && transform.scale > 3.2'),
+        'Les limites départementales doivent rester visibles à fort zoom'
+    );
     console.log(`Widget cartographique: ${expectWebgl ? 'WebGL' : 'Canvas de secours'}, valeur au survol et zoom 6400 % OK`);
 })().catch(error => {
     console.error(error);

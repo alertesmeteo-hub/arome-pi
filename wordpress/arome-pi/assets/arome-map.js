@@ -87,7 +87,7 @@
         var baseUrl = (app.dataset.baseUrl || '').replace(/\/+$/, '');
         var requestedLayer = app.dataset.variable || 'temperature';
         var timezone = app.dataset.timezone || 'Europe/Paris';
-        var moduleVersion = app.dataset.moduleVersion || '1.0.2';
+        var moduleVersion = app.dataset.moduleVersion || '1.0.3';
         var animationEnabled = app.dataset.animation !== '0';
         var reducedMotion = window.matchMedia &&
             window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1862,9 +1862,6 @@
                 pixelRatio * offsetY
             );
             vectorDefinition.paths.forEach(function (entry) {
-                if (entry.department && transform.scale > 3.2) {
-                    return;
-                }
                 vectorContext.strokeStyle = entry.colour;
                 vectorContext.globalAlpha = entry.opacity;
                 vectorContext.lineCap = entry.lineCap;
