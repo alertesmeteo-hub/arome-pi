@@ -3,7 +3,7 @@ Contributors: alertesmeteo
 Tags: meteo, arome-pi, meteofrance, prevision-immediate, avada
 Requires at least: 5.8
 Requires PHP: 7.4
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,6 +25,14 @@ AROME-PI est actualisé chaque heure et vise la prévision immédiate jusqu'à 6
 4. Insérez [aromepi_meteo] dans un élément Code ou Shortcode Avada.
 
 == Changelog ==
+
+= 1.0.4 =
+* Carte principale agrandie et zoom initial sur la ville rendu plus lisible.
+* Limites départementales affinées puis progressivement atténuées aux grossissements extrêmes.
+* Commandes Capture, Diagramme, Recentrer ville et Plein écran réunies au-dessus de la carte.
+* Ajout des onglets Carte France, Cartes Europe et Cartes fixes non interactives.
+* Libellés simplifiés : Orages et Neige.
+* Signature www.alertes-meteo.com seule et renforcée sur les cartes.
 
 = 1.0.3 =
 * Limites départementales conservées à tous les niveaux de zoom.

@@ -3,7 +3,7 @@
  * Plugin Name: AROME-PI Météo-France France — Tableaux et cartes
  * Plugin URI: https://github.com/alertesmeteo-hub/arome-pi
  * Description: Module unique de cartes interactives et de prévisions AROME-PI de Météo-France pour la France métropolitaine et la Corse.
- * Version: 1.0.3
+ * Version: 1.0.4
  * Author: Alertes Météo Hub
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('AMPI_VERSION', '1.0.3');
+define('AMPI_VERSION', '1.0.4');
 define('AMPI_RELEASE_DATE', '11/09/2026');
 define('AMPI_OPTION_BASE_URL', 'ampi_national_data_base_url');
 define(
@@ -312,19 +312,22 @@ function ampi_render_map_shortcode($atts) {
             'hauteur' => '700',
             'titre' => 'Cartes AROME-PI France',
             'animation' => 'oui',
+            'vue' => 'france',
         ),
         $atts,
         'aromepi_meteo'
     );
 
     $variable = ampi_map_variable($atts['variable']);
-    $height = max(440, min(900, absint($atts['hauteur'])));
+    $height = max(440, min(1100, absint($atts['hauteur'])));
     $title = trim(sanitize_text_field($atts['titre']));
     if ($title === '') {
         $title = 'Cartes AROME-PI France';
     }
     $animation_value = strtolower(trim(sanitize_text_field($atts['animation'])));
     $animation = !in_array($animation_value, array('non', '0', 'false', 'off'), true);
+    $map_view = strtolower(trim(sanitize_key($atts['vue'])));
+    $map_view = in_array($map_view, array('france', 'europe'), true) ? $map_view : 'france';
     $map_id = function_exists('wp_unique_id')
         ? wp_unique_id('ampi-map-')
         : 'ampi-map-' . wp_rand(1000, 999999);
@@ -343,6 +346,7 @@ function ampi_render_map_shortcode($atts) {
         data-timezone="<?php echo esc_attr(wp_timezone_string()); ?>"
         data-animation="<?php echo $animation ? '1' : '0'; ?>"
         data-module-version="<?php echo esc_attr(AMPI_VERSION); ?>"
+        data-map-view="<?php echo esc_attr($map_view); ?>"
         style="--ampim-height: <?php echo esc_attr($height); ?>px"
     >
         <header class="ampi-header ampim-header">
@@ -372,10 +376,9 @@ function ampi_render_map_shortcode($atts) {
                 <button
                     type="button"
                     class="ampim-tool-toggle"
-                    data-ampim-tool="zoom"
-                    aria-pressed="false"
-                    title="Afficher les outils de capture et d’épinglage"
-                >🔍 Zoom interactif</button>
+                    data-ampim-capture
+                    title="Télécharger la carte affichée"
+                >📷 Capture</button>
                 <button
                     type="button"
                     class="ampim-tool-toggle"
@@ -383,6 +386,18 @@ function ampi_render_map_shortcode($atts) {
                     aria-pressed="false"
                     title="Cliquer sur la carte pour afficher le diagramme d’un point"
                 >📈 Diagramme</button>
+                <button
+                    type="button"
+                    class="ampim-tool-toggle"
+                    data-ampim-recenter-city
+                    title="Recentrer la carte sur la commune choisie"
+                >⌾ Recentrer ville</button>
+                <button
+                    type="button"
+                    class="ampim-tool-toggle"
+                    data-ampim-fullscreen
+                    title="Afficher la carte en plein écran"
+                >⛶ Plein écran</button>
             </div>
             <div class="ampim-time-controls" aria-label="Navigation dans les échéances">
                 <button type="button" data-ampim-previous title="Échéance précédente" aria-label="Échéance précédente">◀</button>
@@ -456,11 +471,9 @@ function ampi_render_map_shortcode($atts) {
                 <span class="ampim-zoom-level" data-ampim-zoom-level>100 %</span>
                 <button type="button" data-ampim-zoom-in title="Agrandir" aria-label="Agrandir">+</button>
                 <button type="button" data-ampim-zoom-out title="Réduire" aria-label="Réduire">−</button>
-                <button type="button" data-ampim-reset title="Recentrer" aria-label="Recentrer">⌂</button>
-                <button type="button" data-ampim-fullscreen title="Plein écran" aria-label="Plein écran">⛶</button>
+                <button type="button" data-ampim-reset title="Voir toute la zone" aria-label="Voir toute la zone">⌂</button>
             </div>
             <div class="ampim-advanced-tools" data-ampim-advanced-tools hidden aria-label="Outils avancés">
-                <button type="button" data-ampim-capture title="Capturer l’image affichée" aria-label="Capturer l’image affichée">📷 Capture PNG</button>
                 <button type="button" data-ampim-pin title="Épingler la valeur au clic" aria-label="Épingler la valeur au clic" aria-pressed="false">📌 Figer la valeur</button>
             </div>
             <div class="ampim-diagram-popup" data-ampim-diagram-popup hidden>
@@ -474,7 +487,7 @@ function ampi_render_map_shortcode($atts) {
             </div>
             <div class="ampim-legend" data-ampim-legend aria-label="Légende de la carte"></div>
             <a class="ampim-map-brand" href="https://www.alertes-meteo.com/" target="_blank" rel="noopener noreferrer">
-                www.alertes-meteo.com • Module v<?php echo esc_html(AMPI_VERSION); ?> (<?php echo esc_html(AMPI_RELEASE_DATE); ?>)
+                www.alertes-meteo.com
             </a>
             <div class="ampim-loading" data-ampim-loading role="status">Chargement de la carte…</div>
             <div class="ampim-error" data-ampim-error role="alert" hidden></div>
@@ -614,39 +627,68 @@ function ampi_render_shortcode($atts) {
                 class="ampi-tab ampi-tab-map is-active"
                 role="tab"
                 aria-selected="true"
-                data-ampi-tab="map"
-            >🗺️ Cartes météo</button>
+                data-ampi-tab="map-france"
+            >Carte France</button>
+            <button
+                type="button"
+                class="ampi-tab ampi-tab-map"
+                role="tab"
+                aria-selected="false"
+                data-ampi-tab="map-europe"
+            >Cartes Europe</button>
             <button
                 type="button"
                 class="ampi-tab"
                 role="tab"
                 aria-selected="false"
                 data-ampi-tab="general"
-            >🌤️ Prévisions générales</button>
+            >Prévisions générales</button>
             <button
                 type="button"
                 class="ampi-tab ampi-tab-storm"
                 role="tab"
                 aria-selected="false"
                 data-ampi-tab="storms"
-            >⛈️ Prévisions orages</button>
+            >Orages</button>
             <button
                 type="button"
                 class="ampi-tab ampi-tab-snow"
                 role="tab"
                 aria-selected="false"
                 data-ampi-tab="snow"
-            >❄️ Risque de neige</button>
+            >Neige</button>
+            <button
+                type="button"
+                class="ampi-tab ampi-tab-static"
+                role="tab"
+                aria-selected="false"
+                data-ampi-tab="static"
+            >Cartes fixes</button>
         </div>
 
-        <div class="ampi-panel ampi-map-panel" data-ampi-panel="map">
+        <div class="ampi-panel ampi-map-panel" data-ampi-panel="map-france">
             <?php
             echo ampi_render_map_shortcode(
                 array(
                     'variable' => 'temperature',
-                    'hauteur' => '760',
+                    'hauteur' => '1050',
                     'titre' => 'Cartes AROME-PI France — résolution 1,3 km',
                     'animation' => 'oui',
+                    'vue' => 'france',
+                )
+            );
+            ?>
+        </div>
+
+        <div class="ampi-panel ampi-map-panel" data-ampi-panel="map-europe" hidden>
+            <?php
+            echo ampi_render_map_shortcode(
+                array(
+                    'variable' => 'pression',
+                    'hauteur' => '1050',
+                    'titre' => 'Cartes AROME-PI Europe occidentale',
+                    'animation' => 'oui',
+                    'vue' => 'europe',
                 )
             );
             ?>
@@ -768,6 +810,19 @@ function ampi_render_shortcode($atts) {
             <p class="ampi-snow-note">
                 <strong>Lecture neige :</strong> les cumuls de neige sont des sorties directes AROME-PI. La neige fraîche et la tenue sont estimées à partir du cumul en eau, de la température à 2 m et de l’altitude du point de grille.
             </p>
+        </div>
+
+        <div class="ampi-panel ampi-static-panel" data-ampi-panel="static" hidden>
+            <header class="ampi-static-head">
+                <div>
+                    <p class="ampi-kicker">CARTES PRÊTES À CONSULTER</p>
+                    <h2>Cartes AROME-PI non interactives</h2>
+                </div>
+                <p>Présentation fixe avec le run, l’échéance et une carte lisible, dans l’esprit de votre exemple.</p>
+            </header>
+            <div class="ampi-static-gallery" data-ampi-static-gallery>
+                <p class="ampi-loading">Chargement des cartes fixes…</p>
+            </div>
         </div>
 
         <footer class="ampi-footer">
