@@ -148,6 +148,29 @@ class AromePipelineTests(unittest.TestCase):
         self.assertEqual(int(transformed["thunder_risk_code"][1]), 3)
         self.assertEqual(transformed["temperature_c"].shape, shape)
 
+    def test_hourly_api_precipitation_is_accumulated_without_subtraction(self) -> None:
+        shape = (2,)
+        altitude = np.zeros(shape)
+        first, state = transform_step(
+            {
+                "precipitation_hourly_mm": np.asarray([0.2, 1.5]),
+                "pressure_msl_pa": np.asarray([101200.0, 100500.0]),
+            },
+            altitude,
+            {},
+            1,
+        )
+        second, _state = transform_step(
+            {"precipitation_hourly_mm": np.asarray([0.4, 2.0])},
+            altitude,
+            state,
+            2,
+        )
+        np.testing.assert_allclose(first["precipitation_mm"], [0.2, 1.5])
+        np.testing.assert_allclose(second["precipitation_mm"], [0.4, 2.0])
+        np.testing.assert_allclose(second["precipitation_total_mm"], [0.6, 3.5])
+        np.testing.assert_allclose(first["pressure_hpa"], [1012.0, 1005.0])
+
     def test_pregridded_renderer_and_static_altitude(self) -> None:
         with tempfile.TemporaryDirectory(prefix="arome-map-test-") as temporary:
             destination = Path(temporary) / "maps"

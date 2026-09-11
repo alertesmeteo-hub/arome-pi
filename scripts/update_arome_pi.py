@@ -39,7 +39,7 @@ from arome_maps import DEFAULT_BOUNDS, AromeMapRenderer
 
 
 LOGGER = logging.getLogger("arome.pi")
-PIPELINE_VERSION = "1.0.3-aromepi"
+PIPELINE_VERSION = "1.0.4-aromepi"
 API_ROOT = (
     "https://public-api.meteofrance.fr/public/aromepi/1.0/wcs/"
     "MF-NWP-HIGHRES-AROMEPI-001-FRANCE-WCS"
@@ -51,13 +51,30 @@ DEFAULT_CURRENT_METADATA_URL = (
 )
 USER_AGENT = "alertes-meteo.com/arome-pi/1.0"
 
-# L'API AROME-PI publie actuellement ces trois champs exploitables à toutes les
-# échéances. Les autres colonnes du schéma v3 restent à null : elles ne doivent
-# jamais être remplacées par des valeurs issues de l'AROME classique.
+# Huit couvertures × six échéances + GetCapabilities = 49 requêtes : cette
+# sélection reste sous le quota de 50 requêtes/minute de l'API. Le suffixe
+# PT1H demande bien le cumul de précipitations sur l'heure écoulée.
 API_FIELDS = {
-    "GUST_U": ("U_COMPONENT_OF_WIND_GUST_15MIN__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND", 10),
-    "GUST_V": ("V_COMPONENT_OF_WIND_GUST_15MIN__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND", 10),
-    "REFLECTIVITY": ("REFLECTIVITY_MAX_DBZ__GROUND_OR_WATER_SURFACE", None),
+    "TEMPERATURE": ("TEMPERATURE__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND", 2, ""),
+    "HUMIDITY": ("RELATIVE_HUMIDITY__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND", 2, ""),
+    "PRECIPITATION": (
+        "TOTAL_PRECIPITATION__GROUND_OR_WATER_SURFACE",
+        None,
+        "_PT1H",
+    ),
+    "PRESSURE": ("PRESSURE__SEA_SURFACE", None, ""),
+    "LOW_CLOUD": ("LOW_CLOUD_COVER__GROUND_OR_WATER_SURFACE", None, ""),
+    "GUST_U": (
+        "U_COMPONENT_OF_WIND_GUST_15MIN__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND",
+        10,
+        "",
+    ),
+    "GUST_V": (
+        "V_COMPONENT_OF_WIND_GUST_15MIN__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND",
+        10,
+        "",
+    ),
+    "REFLECTIVITY": ("REFLECTIVITY_MAX_DBZ__GROUND_OR_WATER_SURFACE", None, ""),
 }
 
 # Grille EURW1S100 documentée par Météo-France et vérifiée sur les GRIB2.
@@ -444,36 +461,10 @@ def api_resources(session: requests.Session) -> list[Resource]:
         len(coverage_bases),
         ", ".join(coverage_bases),
     )
-    diagnostic_fields = (
-        "TOTAL_PRECIPITATION_RATE__",
-        "TOTAL_PRECIPITATION__",
-        "TOTAL_WATER_PRECIPITATION__",
-        "TEMPERATURE__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND",
-        "RELATIVE_HUMIDITY__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND",
-        "PRESSURE__SEA_SURFACE",
-        "LOW_CLOUD_COVER__",
-        "VISIBILITY_MINI_15MIN__",
-    )
-    coverage_templates = sorted(
-        {
-            re.sub(
-                r"___\d{4}-\d{2}-\d{2}T\d{2}\.\d{2}\.\d{2}Z",
-                "___{run}",
-                coverage,
-            )
-            for coverage in coverage_ids
-            if coverage.startswith(diagnostic_fields)
-        }
-    )
-    LOGGER.info(
-        "Gabarits WCS prioritaires (%s) : %s",
-        len(coverage_templates),
-        ", ".join(coverage_templates),
-    )
     resources: list[Resource] = []
-    for group, (field_name, height) in API_FIELDS.items():
+    for group, (field_name, height, suffix) in API_FIELDS.items():
         pattern = re.compile(
-            rf"^{re.escape(field_name)}___(\d{{4}}-\d{{2}}-\d{{2}}T\d{{2}}\.\d{{2}}\.\d{{2}}Z)$"
+            rf"^{re.escape(field_name)}___(\d{{4}}-\d{{2}}-\d{{2}}T\d{{2}}\.\d{{2}}\.\d{{2}}Z){re.escape(suffix)}$"
         )
         for coverage in sorted(coverage_ids):
             match = pattern.match(coverage)
@@ -702,7 +693,10 @@ def message_field(gid: int) -> str | None:
         "lcc": "cloud_low_pct",
         "mcc": "cloud_mid_pct",
         "hcc": "cloud_high_pct",
-        "tirf": "precipitation_total_mm",
+        "tirf": "precipitation_hourly_mm",
+        "tp": "precipitation_hourly_mm",
+        "prmsl": "pressure_msl_pa",
+        "msl": "pressure_msl_pa",
         "tsnowp": "snow_total_mm",
         "h": "altitude_m",
     }
@@ -717,7 +711,22 @@ def message_field(gid: int) -> str | None:
     if "v component" in descriptive_name and "gust" in descriptive_name:
         return "gust_v_ms"
     if "total precipitation" in descriptive_name:
-        return "precipitation_total_mm"
+        return "precipitation_hourly_mm"
+    if "relative humidity" in descriptive_name:
+        return "humidity_pct"
+    if "low cloud cover" in descriptive_name:
+        return "cloud_low_pct"
+    if "pressure" in descriptive_name and (
+        "sea surface" in descriptive_name
+        or "mean sea level" in descriptive_name
+        or "reduced to msl" in descriptive_name
+    ):
+        return "pressure_msl_pa"
+    if "temperature" in descriptive_name and not any(
+        qualifier in descriptive_name
+        for qualifier in ("dew point", "wet bulb", "brightness")
+    ):
+        return "temperature_k"
     if "solid precipitation" in descriptive_name:
         return "snow_total_mm"
     if "reflectivity" in descriptive_name:
@@ -929,19 +938,39 @@ def transform_step(
     gust_u = array_like(raw, "gust_u_ms", shape)
     gust_v = array_like(raw, "gust_v_ms", shape)
     surface_pressure = array_like(raw, "surface_pressure_pa", shape) / 100.0
+    msl_pressure = array_like(raw, "pressure_msl_pa", shape) / 100.0
     cape = np.maximum(array_like(raw, "cape_jkg", shape), 0.0)
     reflectivity = np.clip(array_like(raw, "reflectivity_dbz", shape), 0, 80)
     cloud_low = np.clip(array_like(raw, "cloud_low_pct", shape), 0, 100)
     cloud_mid = np.clip(array_like(raw, "cloud_mid_pct", shape), 0, 100)
     cloud_high = np.clip(array_like(raw, "cloud_high_pct", shape), 0, 100)
 
-    precipitation, rain_total = accumulation(
-        raw,
-        "precipitation_total_mm",
-        shape,
-        previous.get("rain_total"),
-        lead_hour,
-    )
+    hourly_precipitation = array_like(raw, "precipitation_hourly_mm", shape)
+    if np.any(np.isfinite(hourly_precipitation)):
+        precipitation = np.where(
+            np.isfinite(hourly_precipitation),
+            np.maximum(hourly_precipitation, 0.0),
+            np.nan,
+        )
+        previous_total = previous.get("rain_total")
+        if previous_total is None:
+            rain_total = precipitation.copy()
+        else:
+            rain_total = np.nan_to_num(previous_total, nan=0.0) + np.nan_to_num(
+                precipitation, nan=0.0
+            )
+            missing = ~np.isfinite(previous_total) & ~np.isfinite(precipitation)
+            rain_total[missing] = np.nan
+    else:
+        # Compatibilité avec les fichiers locaux fournissant un cumul depuis
+        # le début du run, au lieu de la fenêtre horaire PT1H de l'API.
+        precipitation, rain_total = accumulation(
+            raw,
+            "precipitation_total_mm",
+            shape,
+            previous.get("rain_total"),
+            lead_hour,
+        )
     snow, snow_total = accumulation(
         raw, "snow_total_mm", shape, previous.get("snow_total"), lead_hour
     )
@@ -1005,11 +1034,12 @@ def transform_step(
     ] = np.nan
 
     temperature_kelvin = np.maximum(temperature + 273.15, 180.0)
-    pressure = surface_pressure * np.exp(
+    derived_pressure = surface_pressure * np.exp(
         9.80665 * np.maximum(altitude, -500.0)
         / (287.05 * (temperature_kelvin + 0.00325 * np.maximum(altitude, 0.0)))
     )
-    pressure[~np.isfinite(surface_pressure) | ~np.isfinite(temperature)] = np.nan
+    derived_pressure[~np.isfinite(surface_pressure) | ~np.isfinite(temperature)] = np.nan
+    pressure = np.where(np.isfinite(msl_pressure), msl_pressure, derived_pressure)
     pressure = np.clip(pressure, 850, 1085)
 
     condition = np.zeros(shape, dtype=np.int16)
