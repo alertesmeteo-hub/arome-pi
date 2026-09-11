@@ -62,7 +62,7 @@ jobs:
           assert index["coverage"]["communes"] == 34746
           assert index["coverage"]["departments"] == 96
           assert len(maps["layers"]) >= 2
-          assert len(maps["steps"]) >= 7
+          assert len(maps["steps"]) >= 6
           assert (root / "departements/66.json").is_file()
           print(
               f"Validation OK : {len(maps['layers'])} cartes, "

@@ -39,7 +39,7 @@ from arome_maps import DEFAULT_BOUNDS, AromeMapRenderer
 
 
 LOGGER = logging.getLogger("arome.pi")
-PIPELINE_VERSION = "1.0.2-aromepi"
+PIPELINE_VERSION = "1.0.3-aromepi"
 API_ROOT = (
     "https://public-api.meteofrance.fr/public/aromepi/1.0/wcs/"
     "MF-NWP-HIGHRES-AROMEPI-001-FRANCE-WCS"
@@ -438,7 +438,9 @@ def api_resources(session: requests.Session) -> list[Resource]:
             run_raw = match.group(1)
             run_text = run_raw.replace(".", ":", 2)
             run_time = datetime.fromisoformat(run_text.replace("Z", "+00:00"))
-            for lead in range(7):
+            # AROME-PI démarre à +15 min. Pour la publication horaire du
+            # module, on retient les échéances entières valides +1 h à +6 h.
+            for lead in range(1, 7):
                 valid_time = iso_utc(run_time + timedelta(hours=lead))
                 query: list[tuple[str, str]] = [
                     ("service", "WCS"),
@@ -500,7 +502,7 @@ def choose_resources(
     required = {
         (group, lead)
         for group in API_FIELDS
-        for lead in range(forecast_hours + 1)
+        for lead in range(1, forecast_hours + 1)
     }
     candidates: list[tuple[datetime, str, dict[tuple[str, int], Resource]]] = []
     for run_text, selection in grouped.items():
@@ -521,7 +523,7 @@ def choose_resources(
             )
         raise IncompleteRunError(
             "Catalogue AROME-PI en cours de synchronisation : aucun run unique ne "
-            f"contient les champs essentiels de +00 h à +{forecast_hours:02d} h "
+            f"contient les champs essentiels de +01 h à +{forecast_hours:02d} h "
             f"(par run : {'; '.join(inventories) or 'aucune ressource'})"
         )
     _date, run_text, selection = max(candidates, key=lambda item: item[0])
@@ -1256,7 +1258,7 @@ def build_product(
     source_bytes = 0
 
     try:
-        for lead in range(forecast_hours + 1):
+        for lead in range(1, forecast_hours + 1):
             current_paths: list[Path] = []
             current_resources = [resources[group, lead] for group in API_FIELDS]
             try:
@@ -1279,7 +1281,7 @@ def build_product(
                 )
                 step = parse_grib_files(current_paths, grid, map_sampler, lead)
                 model_run = model_run or step["run_time"]
-                if lead == 0:
+                if point_altitude is None:
                     # L'API ciblée AROME-PI ne fournit pas l'orographie dans le
                     # lot minimal. Le schéma v3 est préservé avec une altitude
                     # nulle ; les diagnostics dépendants restent à null.
