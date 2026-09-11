@@ -426,6 +426,24 @@ def api_resources(session: requests.Session) -> list[Resource]:
     )
     response.raise_for_status()
     coverage_ids = set(re.findall(r"<[^>]*CoverageId>([^<]+)</", response.text))
+    # Journaliser une seule fois les identifiants sans la date du run permet de
+    # suivre les paramètres réellement proposés par l'API (leurs noms peuvent
+    # différer de ceux de l'AROME classique), sans exposer la clé secrète.
+    coverage_bases = sorted(
+        {
+            re.sub(
+                r"___\d{4}-\d{2}-\d{2}T\d{2}\.\d{2}\.\d{2}Z(?:_PT[^_]+)?$",
+                "",
+                coverage,
+            )
+            for coverage in coverage_ids
+        }
+    )
+    LOGGER.info(
+        "Paramètres WCS AROME-PI disponibles (%s) : %s",
+        len(coverage_bases),
+        ", ".join(coverage_bases),
+    )
     resources: list[Resource] = []
     for group, (field_name, height) in API_FIELDS.items():
         pattern = re.compile(
