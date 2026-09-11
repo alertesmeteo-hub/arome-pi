@@ -87,7 +87,7 @@
         var baseUrl = (app.dataset.baseUrl || '').replace(/\/+$/, '');
         var requestedLayer = app.dataset.variable || 'temperature';
         var timezone = app.dataset.timezone || 'Europe/Paris';
-        var moduleVersion = app.dataset.moduleVersion || '1.0.3';
+        var moduleVersion = app.dataset.moduleVersion || '1.0.4';
         var animationEnabled = app.dataset.animation !== '0';
         var reducedMotion = window.matchMedia &&
             window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -131,6 +131,7 @@
         var zoomOut = app.querySelector('[data-ampim-zoom-out]');
         var reset = app.querySelector('[data-ampim-reset]');
         var fullscreen = app.querySelector('[data-ampim-fullscreen]');
+        var recenterCity = app.querySelector('[data-ampim-recenter-city]');
         var zoomLevel = app.querySelector('[data-ampim-zoom-level]');
         var probe = app.querySelector('[data-ampim-probe]');
         var probeValue = app.querySelector('[data-ampim-probe-value]');
@@ -172,6 +173,7 @@
         var fallbackContext = null;
         var maxScale = 64;
         var pendingFocus = null;
+        var cityFocus = null;
         var toolMode = null;
         var showSecondaryLayers = false;
         var pinnedEnabled = false;
@@ -1863,10 +1865,15 @@
             );
             vectorDefinition.paths.forEach(function (entry) {
                 vectorContext.strokeStyle = entry.colour;
-                vectorContext.globalAlpha = entry.opacity;
+                var opacity = entry.opacity;
+                if (entry.department && transform.scale > 14) {
+                    opacity *= Math.max(0, (24 - transform.scale) / 10);
+                }
+                vectorContext.globalAlpha = opacity;
                 vectorContext.lineCap = entry.lineCap;
                 vectorContext.lineJoin = entry.lineJoin;
-                vectorContext.lineWidth = entry.width / horizontalScale;
+                var displayWidth = entry.department ? Math.min(entry.width, 0.72) : entry.width;
+                vectorContext.lineWidth = displayWidth / horizontalScale;
                 vectorContext.stroke(entry.path);
             });
             vectorContext.globalAlpha = 1;
@@ -2117,6 +2124,13 @@
 
         function focusLocation(detail) {
             pendingFocus = detail || null;
+            if (detail) {
+                cityFocus = {
+                    latitude: Number(detail.latitude),
+                    longitude: Number(detail.longitude),
+                    scale: Number(detail.scale) || 8
+                };
+            }
             if (!manifest || !pendingFocus || !manifest.bounds) {
                 return;
             }
@@ -2145,6 +2159,17 @@
 
         app.addEventListener('ampim:focus-location', function (event) {
             focusLocation(event.detail);
+        });
+        app.addEventListener('ampim:set-location', function (event) {
+            if (!event.detail) { return; }
+            cityFocus = {
+                latitude: Number(event.detail.latitude),
+                longitude: Number(event.detail.longitude),
+                scale: Number(event.detail.scale) || 8
+            };
+        });
+        app.addEventListener('ampim:refresh', function () {
+            window.setTimeout(applyTransform, 20);
         });
 
         menuToggle.addEventListener('click', function () {
@@ -2206,6 +2231,13 @@
             changeZoom(transform.scale / 1.5);
         });
         reset.addEventListener('click', resetView);
+        if (recenterCity) {
+            recenterCity.addEventListener('click', function () {
+                if (cityFocus) {
+                    focusLocation(cityFocus);
+                }
+            });
+        }
         fullscreen.addEventListener('click', function () {
             if (document.fullscreenElement) {
                 document.exitFullscreen();

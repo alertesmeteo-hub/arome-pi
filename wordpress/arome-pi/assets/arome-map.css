@@ -9,7 +9,7 @@
 
 .ampim-toolbar {
     display: grid;
-    grid-template-columns: minmax(220px, 1fr) auto auto minmax(220px, 1fr);
+    grid-template-columns: minmax(210px, .9fr) minmax(440px, auto) auto minmax(170px, .7fr);
     align-items: end;
     gap: 16px;
     padding: 15px 20px;
@@ -21,6 +21,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
+    flex-wrap: wrap;
 }
 
 .ampim-card .ampim-tool-toggle {
@@ -868,14 +869,16 @@
     bottom: 49px;
     left: 50%;
     z-index: 8;
-    padding: 2px 6px;
-    border-radius: 3px;
-    background: rgba(7, 8, 12, .88);
+    padding: 7px 14px;
+    border: 2px solid rgba(255, 255, 255, .92);
+    border-radius: 7px;
+    background: rgba(5, 48, 91, .94);
     color: #fff !important;
-    font-size: clamp(.52rem, 1vw, .72rem);
+    font-size: clamp(.78rem, 1.3vw, 1.02rem);
     font-weight: 900;
     line-height: 1.15;
     text-decoration: none;
+    letter-spacing: .015em;
     text-shadow: 0 1px 1px #000;
     transform: translateX(-50%);
     white-space: nowrap;
@@ -1004,6 +1007,15 @@
 }
 
 @media (min-width: 761px) and (max-width: 1080px) {
+    .ampim-toolbar {
+        grid-template-columns: minmax(240px, 1fr) auto;
+    }
+
+    .ampim-tools {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
     .ampim-layer-grid {
         grid-template-columns: repeat(3, minmax(max-content, 1fr));
     }

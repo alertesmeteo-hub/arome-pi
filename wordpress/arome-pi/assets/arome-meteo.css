@@ -459,6 +459,7 @@
 /* === Sélecteur Général / Orages / Neige — v2.3 === */
 .ampi-tabs {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
     padding: 14px 18px;
     border-bottom: 1px solid #cfe0e9;
@@ -1898,5 +1899,114 @@
 
 .ampi-tab-map {
     color: #173f78;
+}
+
+/* Cartes fixes : rendu éditorial non interactif inspiré des cartes synoptiques. */
+.ampi-static-panel {
+    padding: 22px;
+    background: #eef3f7;
+}
+
+.ampi-static-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 18px;
+}
+
+.ampi-static-head h2,
+.ampi-static-head p {
+    margin: 0;
+}
+
+.ampi-static-head > p {
+    max-width: 520px;
+    color: #4d6575;
+    font-size: .86rem;
+}
+
+.ampi-static-gallery {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.ampi-static-card {
+    overflow: hidden;
+    border: 1px solid #b9c5ce;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: 0 7px 20px rgba(19, 48, 67, .12);
+}
+
+.ampi-static-card > header,
+.ampi-static-card > footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 9px 12px;
+    color: #111;
+}
+
+.ampi-static-card > header strong {
+    font-size: 1rem;
+}
+
+.ampi-static-card > header span,
+.ampi-static-card > footer {
+    font-size: .76rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.ampi-static-card > footer {
+    border-top: 1px solid #d4dce2;
+    background: #f8fafb;
+}
+
+.ampi-static-art {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 1.046;
+    background: #a5a6b0;
+}
+
+.ampi-static-art img {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.ampi-static-borders {
+    z-index: 2;
+    pointer-events: none;
+}
+
+.ampi-static-brand {
+    position: absolute;
+    right: 10px;
+    bottom: 9px;
+    z-index: 3;
+    padding: 5px 9px;
+    border: 1px solid #fff;
+    border-radius: 4px;
+    background: rgba(5, 48, 91, .94);
+    color: #fff;
+    font-size: clamp(.65rem, 1.2vw, .86rem);
+    font-weight: 900;
+}
+
+@media (max-width: 780px) {
+    .ampi-static-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .ampi-static-gallery {
+        grid-template-columns: 1fr;
+    }
 }
 

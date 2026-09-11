@@ -871,6 +871,7 @@
         var snowTopScroll = app.querySelector('[data-ampi-top-scroll="snow"]');
         var snowScrollWrap = app.querySelector('[data-ampi-scroll-wrap="snow"]');
         var snowTable = app.querySelector('.ampi-snow-table');
+        var staticGallery = app.querySelector('[data-ampi-static-gallery]');
         var chartTemperature = app.querySelector('[data-ampi-chart-temperature]');
         var chartPressure = app.querySelector('[data-ampi-chart-pressure]');
         var chartRain = app.querySelector('[data-ampi-chart-rain]');
@@ -972,9 +973,20 @@
             app.dataset.activeView = view;
             if (view === 'storms') { window.requestAnimationFrame(updateStormTopScroll); }
             if (view === 'snow') { window.requestAnimationFrame(updateSnowTopScroll); }
-            if (view === 'map' && selectedMapFocus) {
+            if (view === 'map-france' || view === 'map-europe') {
                 window.requestAnimationFrame(function () {
-                    var mapApp = app.querySelector('[data-ampim-app]');
+                    var viewName = view === 'map-europe' ? 'europe' : 'france';
+                    var selectedMap = app.querySelector(
+                        '[data-ampim-app][data-map-view="' + viewName + '"]'
+                    );
+                    if (selectedMap) {
+                        selectedMap.dispatchEvent(new CustomEvent('ampim:refresh'));
+                    }
+                });
+            }
+            if (view === 'map-france' && selectedMapFocus) {
+                window.requestAnimationFrame(function () {
+                    var mapApp = app.querySelector('[data-ampim-app][data-map-view="france"]');
                     if (mapApp) {
                         mapApp.dispatchEvent(new CustomEvent('ampim:focus-location', {
                             detail: selectedMapFocus
@@ -989,7 +1001,74 @@
                 setActiveView(button.dataset.ampiTab || 'general');
             });
         });
-        app.dataset.activeView = 'map';
+        app.dataset.activeView = 'map-france';
+
+        function staticAssetUrl(path, version) {
+            return baseUrl + '/' + String(path || '').replace(/^\/+/, '') +
+                (version ? '?v=' + encodeURIComponent(version) : '');
+        }
+
+        function buildStaticGallery() {
+            if (!staticGallery) { return; }
+            fetchJson(baseUrl + '/maps/index.json', { cache: 'no-cache' })
+                .then(function (maps) {
+                    if (!maps || maps.status !== 'ok' || !maps.layers ||
+                            !Array.isArray(maps.steps) || !maps.steps.length) {
+                        throw new Error('manifeste cartographique invalide');
+                    }
+                    var preferred = [
+                        'pression', 'temperature', 'pluie_1h',
+                        'rafales', 'reflectivite', 'humidite'
+                    ];
+                    var step = maps.steps[Math.min(1, maps.steps.length - 1)];
+                    var version = maps.generated_at || '';
+                    var run = maps.run_time ? fullFormat.format(new Date(maps.run_time)) : '—';
+                    var valid = step.valid_time ? fullFormat.format(new Date(step.valid_time)) : '—';
+                    staticGallery.replaceChildren();
+                    preferred.forEach(function (key) {
+                        var layer = maps.layers[key];
+                        var imagePath = step.files && step.files[key];
+                        if (!layer || !imagePath) { return; }
+                        var card = document.createElement('article');
+                        card.className = 'ampi-static-card';
+                        var head = document.createElement('header');
+                        var title = document.createElement('strong');
+                        title.textContent = layer.label + (layer.unit ? ' (' + layer.unit + ')' : '');
+                        var lead = document.createElement('span');
+                        lead.textContent = 'Échéance +' + step.lead_hour + ' h';
+                        head.append(title, lead);
+                        var art = document.createElement('div');
+                        art.className = 'ampi-static-art';
+                        var weather = document.createElement('img');
+                        weather.src = staticAssetUrl(imagePath, version);
+                        weather.alt = layer.label + ' — ' + valid;
+                        weather.loading = 'lazy';
+                        var borders = document.createElement('img');
+                        borders.className = 'ampi-static-borders';
+                        borders.src = staticAssetUrl(maps.overlay, version);
+                        borders.alt = '';
+                        borders.setAttribute('aria-hidden', 'true');
+                        var brand = document.createElement('span');
+                        brand.className = 'ampi-static-brand';
+                        brand.textContent = 'www.alertes-meteo.com';
+                        art.append(weather, borders, brand);
+                        var footer = document.createElement('footer');
+                        footer.textContent = 'Run ' + run + ' • valable ' + valid;
+                        card.append(head, art, footer);
+                        staticGallery.appendChild(card);
+                    });
+                    if (!staticGallery.children.length) {
+                        throw new Error('aucune carte fixe disponible');
+                    }
+                })
+                .catch(function (error) {
+                    staticGallery.replaceChildren();
+                    var message = document.createElement('p');
+                    message.className = 'ampi-message ampi-error';
+                    message.textContent = 'Cartes fixes indisponibles : ' + error.message;
+                    staticGallery.appendChild(message);
+                });
+        }
 
         function putMessage(body, message, error, colspan) {
             if (!body) { return; }
@@ -1477,16 +1556,22 @@
             selectedMapFocus = {
                 latitude: Number(commune[4]),
                 longitude: Number(commune[5]),
-                scale: 32
+                scale: 8
             };
-            var mapApp = app.querySelector('[data-ampim-app]');
-            if (mapApp) {
-                window.requestAnimationFrame(function () {
-                    mapApp.dispatchEvent(new CustomEvent('ampim:focus-location', {
+            var mapApps = Array.prototype.slice.call(app.querySelectorAll('[data-ampim-app]'));
+            window.requestAnimationFrame(function () {
+                mapApps.forEach(function (mapApp) {
+                    mapApp.dispatchEvent(new CustomEvent('ampim:set-location', {
                         detail: selectedMapFocus
                     }));
                 });
-            }
+                var franceMap = app.querySelector('[data-ampim-app][data-map-view="france"]');
+                if (franceMap) {
+                    franceMap.dispatchEvent(new CustomEvent('ampim:focus-location', {
+                        detail: selectedMapFocus
+                    }));
+                }
+            });
             input.value = cityName;
             app.dataset.cityCode = commune[0];
             app.dataset.cityDepartment = departmentData.department;
@@ -1759,6 +1844,7 @@
             showTableMessage('Adresse des données AROME-PI non configurée.', true);
             return;
         }
+        buildStaticGallery();
         loadIndex()
             .then(function () {
                 return loadDepartment(defaultDepartment);
