@@ -39,7 +39,7 @@ from arome_maps import DEFAULT_BOUNDS, AromeMapRenderer
 
 
 LOGGER = logging.getLogger("arome.pi")
-PIPELINE_VERSION = "1.0.5-aromepi"
+PIPELINE_VERSION = "1.1.0-aromepi"
 API_ROOT = (
     "https://public-api.meteofrance.fr/public/aromepi/1.0/wcs/"
     "MF-NWP-HIGHRES-AROMEPI-001-FRANCE-WCS"
@@ -51,9 +51,9 @@ DEFAULT_CURRENT_METADATA_URL = (
 )
 USER_AGENT = "alertes-meteo.com/arome-pi/1.0"
 
-# Huit couvertures × six échéances + GetCapabilities = 49 requêtes : cette
-# sélection reste sous le quota de 50 requêtes/minute de l'API. Le suffixe
-# PT1H demande bien le cumul de précipitations sur l'heure écoulée.
+# Les couvertures sont téléchargées échéance par échéance et leur décodage
+# espace naturellement les appels. Le suffixe PT1H demande bien le cumul de
+# précipitations sur l'heure écoulée.
 API_FIELDS = {
     "TEMPERATURE": ("TEMPERATURE__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND", 2, ""),
     "HUMIDITY": ("RELATIVE_HUMIDITY__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND", 2, ""),
@@ -75,6 +75,23 @@ API_FIELDS = {
         "",
     ),
     "REFLECTIVITY": ("REFLECTIVITY_MAX_DBZ__GROUND_OR_WATER_SURFACE", None, ""),
+    "SNOW": ("TOTAL_SNOW_PRECIPITATION__GROUND_OR_WATER_SURFACE", None, ""),
+    "GRAUPEL": ("GRAUPEL__GROUND_OR_WATER_SURFACE", None, ""),
+    "CAPE": (
+        "CONVECTIVE_AVAILABLE_POTENTIAL_ENERGY__GROUND_OR_WATER_SURFACE",
+        None,
+        "",
+    ),
+    "GUST_MAX": (
+        "WIND_SPEED_MAXIMUM_GUST__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND",
+        10,
+        "",
+    ),
+    "ISO_ZERO": (
+        "TPLV_27315_HEIGHT__LEVEL_OF_ADIABATIC_CONDENSATION",
+        None,
+        "",
+    ),
 }
 
 # Sans température ni précipitations, la publication ne répond plus à son
@@ -83,6 +100,25 @@ API_FIELDS = {
 # toute la production : le schéma v3 les représentera alors par des valeurs
 # nulles pour l'échéance concernée.
 CRITICAL_API_FIELDS = {"TEMPERATURE", "PRECIPITATION"}
+
+# Le nom court GRIB varie selon les versions des produits Météo-France. Le
+# groupe demandé dans le nom du fichier constitue ici la source de vérité et
+# évite notamment de confondre la hauteur de l'isotherme 0 °C avec le relief.
+RESOURCE_FIELDS = {
+    "TEMPERATURE": "temperature_k",
+    "HUMIDITY": "humidity_pct",
+    "PRECIPITATION": "precipitation_hourly_mm",
+    "PRESSURE": "pressure_msl_pa",
+    "LOW_CLOUD": "cloud_low_pct",
+    "GUST_U": "gust_u_ms",
+    "GUST_V": "gust_v_ms",
+    "REFLECTIVITY": "reflectivity_dbz",
+    "SNOW": "snow_total_mm",
+    "GRAUPEL": "graupel_total_mm",
+    "CAPE": "cape_jkg",
+    "GUST_MAX": "wind_gust_max_ms",
+    "ISO_ZERO": "freezing_level_m",
+}
 
 # Grille EURW1S100 documentée par Météo-France et vérifiée sur les GRIB2.
 AROME_NI = 2801
@@ -172,6 +208,7 @@ MAP_FIELDS = {
     "snow_graupel_total_mm",
     "wind_speed_kmh",
     "wind_gust_kmh",
+    "wind_gust_max_kmh",
     "pressure_hpa",
     "surface_pressure_hpa",
     "cloud_cover_pct",
@@ -180,6 +217,7 @@ MAP_FIELDS = {
     "cloud_high_pct",
     "cape_jkg",
     "reflectivity_dbz",
+    "freezing_level_m",
     "hail_risk_code",
     "storm_type_code",
     "altitude_m",
@@ -221,6 +259,10 @@ class Resource:
 
 class IncompleteRunError(RuntimeError):
     """Le catalogue distant ne contient pas encore un run AROME cohérent."""
+
+
+class ResourceDownloadError(RuntimeError):
+    """Une ressource distante AROME-PI n'a pas pu être téléchargée."""
 
 
 @dataclass
@@ -543,7 +585,7 @@ def choose_resources(
 
     required = {
         (group, lead)
-        for group in API_FIELDS
+        for group in CRITICAL_API_FIELDS
         for lead in range(1, forecast_hours + 1)
     }
     candidates: list[tuple[datetime, str, dict[tuple[str, int], Resource]]] = []
@@ -585,16 +627,17 @@ def wait_for_complete_remote_run(
 ) -> tuple[dict[tuple[str, int], Resource], datetime | None] | None:
     """Attend qu'un run AROME-PI expose tous les champs essentiels."""
 
-    last_error: IncompleteRunError | None = None
+    last_error: Exception | None = None
     for attempt in range(1, attempts + 1):
-        discovered = api_resources(session)
         try:
+            discovered = api_resources(session)
             return choose_resources(discovered, forecast_hours)
-        except IncompleteRunError as exc:
+        except (IncompleteRunError, requests.RequestException) as exc:
             last_error = exc
             if attempt < attempts:
                 LOGGER.warning(
-                    "%s. Nouvelle vérification dans %s s (%s/%s).",
+                    "Catalogue AROME-PI indisponible ou incomplet (%s). "
+                    "Nouvelle vérification dans %s s (%s/%s).",
                     exc,
                     retry_seconds,
                     attempt,
@@ -604,7 +647,8 @@ def wait_for_complete_remote_run(
                     time.sleep(retry_seconds)
 
     LOGGER.warning(
-        "%s. Aucune donnée ne sera écrasée ; le prochain passage du workflow "
+        "Catalogue AROME-PI toujours indisponible ou incomplet (%s). "
+        "Aucune donnée ne sera écrasée ; le prochain passage du workflow "
         "réessaiera automatiquement.",
         last_error,
     )
@@ -640,7 +684,9 @@ def download_resource(
         shutil.copy2(resource.local_path, destination)
         return
     if not resource.url:
-        raise RuntimeError(f"Adresse de téléchargement absente : {resource.title}")
+        raise ResourceDownloadError(
+            f"Adresse de téléchargement absente : {resource.title}"
+        )
     last_error: Exception | None = None
     for attempt in range(1, 4):
         try:
@@ -669,7 +715,9 @@ def download_resource(
                     "Téléchargement à retenter (%s/3) : %s", attempt, resource.title
                 )
                 time.sleep(2**attempt)
-    raise RuntimeError(f"Téléchargement impossible : {resource.title}") from last_error
+    raise ResourceDownloadError(
+        f"Téléchargement impossible : {resource.title}"
+    ) from last_error
 
 
 def mask_missing(values: np.ndarray, missing_value: Any) -> np.ndarray:
@@ -850,13 +898,15 @@ def parse_grib_files(
     observed_lead: float | None = None
 
     for path in paths:
+        resource_group = path.name.split("-", 1)[0].upper()
+        expected_field = RESOURCE_FIELDS.get(resource_group)
         with path.open("rb") as handle:
             while True:
                 gid = codes_grib_new_from_file(handle)
                 if gid is None:
                     break
                 try:
-                    field = message_field(gid)
+                    field = expected_field or message_field(gid)
                     if field is None:
                         continue
                     run_time = run_time or grib_datetime(gid, "dataDate", "dataTime")
@@ -944,6 +994,8 @@ def transform_step(
     v_wind = array_like(raw, "wind_v_ms", shape)
     gust_u = array_like(raw, "gust_u_ms", shape)
     gust_v = array_like(raw, "gust_v_ms", shape)
+    gust_max = array_like(raw, "wind_gust_max_ms", shape)
+    freezing_level = array_like(raw, "freezing_level_m", shape)
     surface_pressure = array_like(raw, "surface_pressure_pa", shape) / 100.0
     msl_pressure = array_like(raw, "pressure_msl_pa", shape) / 100.0
     cape = np.maximum(array_like(raw, "cape_jkg", shape), 0.0)
@@ -1139,6 +1191,7 @@ def transform_step(
         "wind_speed_kmh": rounded(wind_speed, 0),
         "wind_direction_deg": rounded(wind_direction, 0),
         "wind_gust_kmh": rounded(gust_speed, 0),
+        "wind_gust_max_kmh": rounded(np.maximum(gust_max, 0.0) * 3.6, 0),
         "pressure_hpa": rounded(pressure, 0),
         "pressure_surface_hpa": rounded(surface_pressure, 0),
         "surface_pressure_hpa": rounded(surface_pressure, 0),
@@ -1146,6 +1199,7 @@ def transform_step(
         "condition_code": condition,
         "cape_jkg": rounded(cape, 0),
         "reflectivity_dbz": rounded(reflectivity, 0),
+        "freezing_level_m": rounded(np.maximum(freezing_level, 0.0), 0),
         "graupel_mm": rounded(graupel, 2),
         "thunder_risk_code": thunder,
         "lcl_m": rounded(lcl, 0),
@@ -1314,6 +1368,10 @@ def build_product(
     working_directory: Path,
     run_hint: datetime | None,
 ) -> Path:
+    # Dépendance volontairement chargée au moment de la production : les
+    # utilitaires de catalogue restent testables sans initialiser Cartopy.
+    from synoptic_maps import SynopticMapRenderer
+
     result_directory = working_directory / "result"
     forecast_directory = working_directory / "forecast-lines"
     downloads = working_directory / "downloads"
@@ -1341,6 +1399,15 @@ def build_product(
         ),
         pregridded=True,
     )
+    synoptic_renderer = SynopticMapRenderer(
+        result_directory / "synoptic",
+        width=MAP_WIDTH,
+        height=MAP_HEIGHT,
+        bounds=DEFAULT_BOUNDS,
+        boundary_directory=(
+            Path(__file__).resolve().parents[1] / "config" / "natural-earth"
+        ),
+    )
 
     point_altitude: np.ndarray | None = None
     map_altitude: np.ndarray | None = None
@@ -1353,7 +1420,23 @@ def build_product(
     try:
         for lead in range(1, forecast_hours + 1):
             current_paths: list[Path] = []
-            current_resources = [resources[group, lead] for group in API_FIELDS]
+            current_resources: list[Resource] = []
+            for group in API_FIELDS:
+                resource = resources.get((group, lead))
+                if resource is not None:
+                    current_resources.append(resource)
+                    continue
+                if group in CRITICAL_API_FIELDS:
+                    raise IncompleteRunError(
+                        f"Champ AROME-PI essentiel absent : {group} à +{lead:02d} h"
+                    )
+                LOGGER.warning(
+                    "Champ AROME-PI absent du catalogue : %s à +%02d h ; "
+                    "les valeurs correspondantes resteront nulles.",
+                    group,
+                    lead,
+                )
+                missing_resources.append({"group": group, "lead_hour": lead})
             try:
                 for resource in current_resources:
                     destination = downloads / f"{resource.group}-{lead:02d}H.grib2"
@@ -1365,7 +1448,7 @@ def build_product(
                     )
                     try:
                         download_resource(session, resource, destination)
-                    except RuntimeError:
+                    except ResourceDownloadError:
                         if resource.group in CRITICAL_API_FIELDS:
                             raise
                         LOGGER.warning(
@@ -1417,6 +1500,12 @@ def build_product(
                     valid_time=step["valid_time"],
                     fields=map_fields,
                 )
+                synoptic_renderer.render_step(
+                    lead_hour=lead,
+                    run_time=step["run_time"] or model_run,
+                    valid_time=step["valid_time"],
+                    fields=map_fields,
+                )
                 iso_time = iso_utc(step["valid_time"])
                 for code, department in catalog.departments.items():
                     line = [
@@ -1446,6 +1535,10 @@ def build_product(
         generated_at=generated_at,
         run_time=run_time,
         places_path="maps/communes.json",
+    )
+    synoptic_manifest = synoptic_renderer.write_manifest(
+        generated_at=generated_at,
+        run_time=run_time,
     )
     department_index, total_size = write_departments(
         result_directory,
@@ -1486,13 +1579,14 @@ def build_product(
         "condition_codes": CONDITION_CODES,
         "diagnostics": {
             "direct": [
-                "MUCAPE",
+                "SBCAPE",
                 "réflectivité maximale",
                 "pluie cumulée",
                 "neige cumulée",
                 "graupel cumulé",
                 "pression de surface",
                 "nuages bas/moyens/élevés",
+                "hauteur de l’isotherme 0 °C",
             ],
             "derived": [
                 "pression ramenée au niveau de la mer",
@@ -1514,6 +1608,13 @@ def build_product(
             "layers": len(map_manifest["layers"]),
             "steps": len(map_manifest["steps"]),
             "places": places_count,
+        },
+        "synoptic": {
+            "status": "ok",
+            "generator": synoptic_manifest["generator"],
+            "manifest": "synoptic/index.json",
+            "layers": len(synoptic_manifest["layers"]),
+            "steps": len(synoptic_manifest["steps"]),
         },
         "departments": department_index,
         "total_department_bytes": total_size,
@@ -1591,14 +1692,23 @@ def main() -> int:
         return 0
 
     with tempfile.TemporaryDirectory(prefix="arome-pi-build-") as temporary:
-        result = build_product(
-            resources,
-            catalog,
-            args.forecast_hours,
-            session,
-            Path(temporary),
-            run_hint,
-        )
+        try:
+            result = build_product(
+                resources,
+                catalog,
+                args.forecast_hours,
+                session,
+                Path(temporary),
+                run_hint,
+            )
+        except ResourceDownloadError as exc:
+            LOGGER.warning(
+                "Ressource AROME-PI essentielle temporairement indisponible (%s). "
+                "Aucune donnée ne sera écrasée ; le prochain passage du workflow "
+                "réessaiera automatiquement.",
+                exc,
+            )
+            return 0
         publish_result(result, Path(args.output_dir))
     LOGGER.info("Fichiers nationaux prêts dans %s", args.output_dir)
     return 0

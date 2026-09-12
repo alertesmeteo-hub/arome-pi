@@ -24,7 +24,7 @@ from scipy.spatial import cKDTree
 
 
 MAP_SCHEMA_VERSION = 6
-MODULE_VERSION = "1.1.1"
+MODULE_VERSION = "1.2.0"
 # Une valeur numérique tous les deux pixels cartographiques : le survol reste
 # précis à l'échelle d'une commune sans multiplier déraisonnablement le poids
 # de la branche de données.
@@ -40,6 +40,7 @@ CONTOUR_STEPS = {
     "humidex": 1.0,
     "wind_speed_kmh": 5.0,
     "wind_gust_kmh": 5.0,
+    "wind_gust_max_kmh": 5.0,
     "pressure_hpa": 2.0,
     "surface_pressure_hpa": 2.0,
     "cloud_cover_pct": 5.0,
@@ -49,6 +50,7 @@ CONTOUR_STEPS = {
     "humidity_pct": 5.0,
     "cape_jkg": 100.0,
     "reflectivity_dbz": 2.0,
+    "freezing_level_m": 100.0,
     "altitude_m": 50.0,
 }
 DEFAULT_BOUNDS = {
@@ -163,7 +165,7 @@ PRECIPITATION_STOPS = (
 LAYER_SPECS = (
     LayerSpec(
         "temperature",
-        "Température à 2 m",
+        "Température à 2 m — isothermes",
         "°C",
         "temperature_c",
         (
@@ -461,6 +463,23 @@ LAYER_SPECS = (
         group="Vent",
     ),
     LayerSpec(
+        "rafales_max_10m",
+        "Rafales maximales à 10 m",
+        "km/h",
+        "wind_gust_max_kmh",
+        (
+            (0, "#edf7e8"),
+            (20, "#a9d77d"),
+            (40, "#f0cf46"),
+            (60, "#ef8b2c"),
+            (80, "#db3d3d"),
+            (100, "#9e235d"),
+            (130, "#4d1647"),
+            (160, "#25152e"),
+        ),
+        group="Vent",
+    ),
+    LayerSpec(
         "rafales_max",
         "Rafales maximales sur une période",
         "km/h",
@@ -541,6 +560,25 @@ LAYER_SPECS = (
             (700, "#44205f"), (800, "#3455a6"), (900, "#36a1bd"),
             (950, "#54bf7c"), (1000, "#d6d64c"), (1030, "#ed9a36"),
             (1060, "#b52f43"),
+        ),
+        group="Pression et géopotentiel",
+    ),
+    LayerSpec(
+        "iso_zero",
+        "Altitude de l'isotherme 0 °C",
+        "m",
+        "freezing_level_m",
+        (
+            (0, "#4b1d70"),
+            (500, "#384fa7"),
+            (1000, "#318bc2"),
+            (1500, "#3dbdb2"),
+            (2000, "#75cf72"),
+            (2500, "#d9dc43"),
+            (3000, "#f3ae36"),
+            (3500, "#e76e34"),
+            (4000, "#c9364b"),
+            (5000, "#721b64"),
         ),
         group="Pression et géopotentiel",
     ),
@@ -772,8 +810,8 @@ LAYER_SPECS = (
         decimals=2,
     ),
     LayerSpec(
-        "mucape",
-        "MUCAPE instantanée",
+        "sbcape",
+        "SBCAPE",
         "J/kg",
         "cape_jkg",
         (
@@ -784,6 +822,21 @@ LAYER_SPECS = (
         ),
         group="Instabilité",
         transparent_below=25.0,
+    ),
+    LayerSpec(
+        "mucape",
+        "SBCAPE",
+        "J/kg",
+        "cape_jkg",
+        (
+            (0, "#f3f5f8"), (100, "#d8ebff"), (300, "#91c8ff"),
+            (500, "#41a8df"), (800, "#31c878"), (1200, "#d5e52f"),
+            (1800, "#ffc62d"), (2500, "#ff7a22"), (3500, "#e83028"),
+            (5000, "#8c1d74"),
+        ),
+        group="Instabilité",
+        transparent_below=25.0,
+        source_key="sbcape",
     ),
     LayerSpec(
         "reflectivite",
