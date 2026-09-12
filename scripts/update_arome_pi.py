@@ -39,7 +39,7 @@ from arome_maps import DEFAULT_BOUNDS, AromeMapRenderer
 
 
 LOGGER = logging.getLogger("arome.pi")
-PIPELINE_VERSION = "1.0.4-aromepi"
+PIPELINE_VERSION = "1.0.5-aromepi"
 API_ROOT = (
     "https://public-api.meteofrance.fr/public/aromepi/1.0/wcs/"
     "MF-NWP-HIGHRES-AROMEPI-001-FRANCE-WCS"
@@ -76,6 +76,13 @@ API_FIELDS = {
     ),
     "REFLECTIVITY": ("REFLECTIVITY_MAX_DBZ__GROUND_OR_WATER_SURFACE", None, ""),
 }
+
+# Sans température ni précipitations, la publication ne répond plus à son
+# objectif principal. Les autres champs enrichissent les cartes et les
+# diagnostics, mais leur indisponibilité ponctuelle ne doit pas faire échouer
+# toute la production : le schéma v3 les représentera alors par des valeurs
+# nulles pour l'échéance concernée.
+CRITICAL_API_FIELDS = {"TEMPERATURE", "PRECIPITATION"}
 
 # Grille EURW1S100 documentée par Météo-France et vérifiée sur les GRIB2.
 AROME_NI = 2801
@@ -1341,6 +1348,7 @@ def build_product(
     map_state: dict[str, np.ndarray] = {}
     model_run = run_hint
     source_bytes = 0
+    missing_resources: list[dict[str, Any]] = []
 
     try:
         for lead in range(1, forecast_hours + 1):
@@ -1355,7 +1363,22 @@ def build_product(
                         resource.group,
                         (resource.size or 0) / 1e6,
                     )
-                    download_resource(session, resource, destination)
+                    try:
+                        download_resource(session, resource, destination)
+                    except RuntimeError:
+                        if resource.group in CRITICAL_API_FIELDS:
+                            raise
+                        LOGGER.warning(
+                            "::warning title=Champ AROME-PI indisponible::"
+                            "%s à +%02d h est temporairement indisponible ; "
+                            "les valeurs correspondantes seront publiées à null.",
+                            resource.group,
+                            lead,
+                        )
+                        missing_resources.append(
+                            {"group": resource.group, "lead_hour": lead}
+                        )
+                        continue
                     source_bytes += destination.stat().st_size
                     current_paths.append(destination)
                 LOGGER.info(
@@ -1446,6 +1469,8 @@ def build_product(
         "snow_diagnostics": True,
         "source_url": DATASET_PAGE,
         "source_size_bytes": source_bytes,
+        "degraded": bool(missing_resources),
+        "missing_resources": missing_resources,
         "license": "Licence Ouverte 2.0",
     }
     index = {
