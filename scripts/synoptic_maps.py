@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import matplotlib
 
@@ -27,6 +28,7 @@ from shapely.geometry import shape
 # fenêtre affichée est resserrée sur la France métropolitaine, avec la Corse
 # entière et une petite marge permettant de lire les systèmes entrants.
 FRANCE_DISPLAY_EXTENT = (-6.5, 10.5, 41.0, 52.0)
+PARIS_TIMEZONE = ZoneInfo("Europe/Paris")
 
 # Villes de repère, volontairement limitées aux principaux centres pour garder
 # une carte lisible. Les décalages évitent que le libellé masque le point.
@@ -75,12 +77,13 @@ class SynopticSpec:
     colours: tuple[str, ...]
     extend: str = "both"
     smoothing_sigma: float = 1.8
+    map_layer: str = ""
 
 
 SYNOPTIC_SPECS = (
     SynopticSpec(
-        "temperature_pression",
-        "Température à 2 m / pression",
+        "temperature_2m",
+        "Température à 2 m",
         "Température",
         "temperature_c",
         "°C",
@@ -90,11 +93,27 @@ SYNOPTIC_SPECS = (
             "#76d36c", "#c7df3e", "#ffe22d", "#ffad27", "#ff6c22",
             "#e52d2f", "#981d54", "#50113e",
         ),
-        smoothing_sigma=2.2,
+        smoothing_sigma=1.15,
+        map_layer="temperature",
     ),
     SynopticSpec(
-        "precipitations_pression",
-        "Précipitations sur 1 h / pression",
+        "point_rosee",
+        "Point de rosée à 2 m",
+        "Température",
+        "dewpoint_c",
+        "°C",
+        tuple(range(-24, 31, 3)),
+        (
+            "#3d1766", "#38459c", "#2f79b7", "#3ba7c5", "#51c5a8",
+            "#79d06e", "#c9dc48", "#f1cf3f", "#eda13a", "#df653b",
+            "#b6314c", "#711d53",
+        ),
+        smoothing_sigma=1.1,
+        map_layer="point_rosee",
+    ),
+    SynopticSpec(
+        "precipitations_1h",
+        "Précipitations sur 1 h",
         "Précipitations",
         "precipitation_mm",
         "mm",
@@ -105,11 +124,76 @@ SYNOPTIC_SPECS = (
             "#f04432", "#c11c75", "#6d1ca5",
         ),
         "max",
-        1.0,
+        0.65,
+        "pluie_1h",
     ),
     SynopticSpec(
-        "rafales_pression",
-        "Rafales à 10 m / pression",
+        "cumul_precipitations",
+        "Cumul des précipitations",
+        "Précipitations",
+        "precipitation_total_mm",
+        "mm",
+        (0.1, 1, 2, 5, 10, 15, 20, 30, 40, 60, 100, 150, 250),
+        (
+            "#e8f4ff", "#9ed2ff", "#559eff", "#1fd1df", "#16b77e",
+            "#79d839", "#e4e62f", "#ffd52b", "#ffa329", "#f35c2b",
+            "#d32c61", "#8a239b", "#431978",
+        ),
+        "max",
+        0.65,
+        "pluie_cumul",
+    ),
+    SynopticSpec(
+        "cumul_neige",
+        "Cumul neige",
+        "Neige",
+        "snowfall_total_mm",
+        "mm",
+        (0.1, 0.5, 1, 2, 3, 5, 7, 10, 15, 20, 30, 50),
+        (
+            "#f7fbff", "#dbefff", "#aedcff", "#75bff2", "#4d9bdc",
+            "#526fc4", "#6d53b5", "#8c429e", "#b24c96", "#d76c9f",
+            "#ed9fc0", "#f6d7e9",
+        ),
+        "max",
+        0.65,
+        "equivalent_eau_neige",
+    ),
+    SynopticSpec(
+        "cumul_neige_graupel",
+        "Cumul neige + graupel",
+        "Neige",
+        "snow_graupel_total_mm",
+        "mm",
+        (0.1, 0.5, 1, 2, 3, 5, 7, 10, 15, 20, 30, 50),
+        (
+            "#f9fbff", "#d6eeff", "#9bdcff", "#53c6e6", "#3aa8c8",
+            "#4381bd", "#625bb4", "#873fa4", "#b33e91", "#da557d",
+            "#ef8aa3", "#f5c9df",
+        ),
+        "max",
+        0.65,
+        "neige_graupel",
+    ),
+    SynopticSpec(
+        "vent_10m",
+        "Vent à 10 m",
+        "Vent",
+        "wind_speed_kmh",
+        "km/h",
+        (0, 10, 20, 30, 40, 50, 60, 80, 100, 120, 150),
+        (
+            "#eef7e8", "#b8e186", "#6fcd70", "#3db8a0", "#398dcc",
+            "#545fc0", "#8248ad", "#b63d82", "#dd3c55", "#9d243f",
+            "#4b172d",
+        ),
+        "max",
+        0.9,
+        "vent",
+    ),
+    SynopticSpec(
+        "rafales_10m",
+        "Rafales à 10 m",
         "Vent",
         "wind_gust_kmh",
         "km/h",
@@ -120,11 +204,28 @@ SYNOPTIC_SPECS = (
             "#781b3b", "#351426",
         ),
         "max",
-        1.2,
+        0.85,
+        "rafales",
     ),
     SynopticSpec(
-        "humidite_pression",
-        "Humidité relative / pression",
+        "rafales_max_10m",
+        "Rafales maximales à 10 m",
+        "Vent",
+        "wind_gust_max_kmh",
+        "km/h",
+        (0, 20, 30, 40, 50, 60, 70, 80, 100, 120, 140, 170),
+        (
+            "#eef7e8", "#b8e186", "#6fcd70", "#3db8a0", "#398dcc",
+            "#545fc0", "#8248ad", "#b63d82", "#dd3c55", "#bc263f",
+            "#781b3b", "#351426",
+        ),
+        "max",
+        0.85,
+        "rafales_max_10m",
+    ),
+    SynopticSpec(
+        "humidite_relative",
+        "Humidité relative",
         "Nuages et humidité",
         "humidity_pct",
         "%",
@@ -135,11 +236,12 @@ SYNOPTIC_SPECS = (
             "#3d376e",
         ),
         "neither",
-        1.8,
+        1.0,
+        "humidite",
     ),
     SynopticSpec(
-        "sbcape_pression",
-        "SBCAPE / pression",
+        "sbcape",
+        "SBCAPE",
         "Instabilité",
         "cape_jkg",
         "J/kg",
@@ -149,11 +251,12 @@ SYNOPTIC_SPECS = (
             "#d5e52f", "#ffc62d", "#ff7a22", "#e83028", "#8c1d74",
         ),
         "max",
-        0.9,
+        0.6,
+        "mucape",
     ),
     SynopticSpec(
-        "iso_zero_pression",
-        "Isotherme 0 °C / pression",
+        "iso_zero",
+        "Altitude de l’isotherme 0 °C",
         "Pression et altitude",
         "freezing_level_m",
         "m",
@@ -163,7 +266,8 @@ SYNOPTIC_SPECS = (
             "#d9dc43", "#f3ae36", "#e76e34", "#c9364b", "#721b64",
             "#3b143f",
         ),
-        smoothing_sigma=2.0,
+        smoothing_sigma=1.0,
+        map_layer="iso_zero",
     ),
 )
 
@@ -200,7 +304,9 @@ class SynopticMapRenderer:
         )
 
     def _add_boundaries(self, axis) -> None:
-        departments_path = self.boundary_directory / "departements-1000m.geojson"
+        departments_path = self.boundary_directory / "departements-100m.geojson"
+        if not departments_path.is_file():
+            departments_path = self.boundary_directory / "departements-1000m.geojson"
         if departments_path.is_file():
             with departments_path.open("r", encoding="utf-8") as handle:
                 payload = json.load(handle)
@@ -290,7 +396,6 @@ class SynopticMapRenderer:
         self,
         spec: SynopticSpec,
         field: np.ndarray,
-        pressure: np.ndarray | None,
         *,
         lead_hour: int,
         run_time: datetime | None,
@@ -351,38 +456,16 @@ class SynopticMapRenderer:
             )
             axis.clabel(contours, inline=True, fontsize=6, fmt="%g")
 
-        if pressure is not None and np.any(np.isfinite(pressure)):
-            pressure_values = np.asarray(pressure, dtype=np.float64)[::stride, ::stride]
-            pressure_values = self._smooth(pressure_values, 2.4)
-            pressure_masked = np.ma.masked_invalid(pressure_values)
-            pressure_min = max(900, 5 * np.ceil(np.nanmin(pressure_values) / 5))
-            pressure_max = min(1080, 5 * np.floor(np.nanmax(pressure_values) / 5))
-            if pressure_max > pressure_min:
-                pressure_contours = axis.contour(
-                    longitude_grid,
-                    latitude_grid,
-                    pressure_masked,
-                    levels=np.arange(pressure_min, pressure_max + 1, 5),
-                    colors="white",
-                    linewidths=1.35,
-                    transform=ccrs.PlateCarree(),
-                    zorder=6,
-                )
-                axis.clabel(
-                    pressure_contours,
-                    inline=True,
-                    fontsize=7,
-                    colors="white",
-                    fmt="%d",
-                )
-
         self._add_boundaries(axis)
         self._add_cities(axis)
         axis.set_xticks([])
         axis.set_yticks([])
 
-        run_label = run_time.strftime("%d/%m/%Y %HZ") if run_time else "indisponible"
-        valid_label = valid_time.strftime("%a %d/%m %HZ")
+        run_label = (
+            run_time.astimezone(PARIS_TIMEZONE).strftime("%d/%m/%Y %Hh")
+            if run_time else "indisponible"
+        )
+        valid_label = valid_time.astimezone(PARIS_TIMEZONE).strftime("%a %d/%m %Hh")
         fig.text(
             0.5,
             0.955,
@@ -402,8 +485,8 @@ class SynopticMapRenderer:
             "www.alertes-meteo.com",
             ha="center",
             va="center",
-            fontsize=10,
-            color="#666666",
+            fontsize=8,
+            color="#555555",
         )
         destination.parent.mkdir(parents=True, exist_ok=True)
         fig.savefig(destination, format="png", facecolor="white", bbox_inches=None)
@@ -418,7 +501,6 @@ class SynopticMapRenderer:
         fields: dict[str, np.ndarray],
     ) -> None:
         files: dict[str, str] = {}
-        pressure = fields.get("pressure_hpa")
         for spec in SYNOPTIC_SPECS:
             field = fields.get(spec.field)
             if field is None or not np.any(np.isfinite(field)):
@@ -427,7 +509,6 @@ class SynopticMapRenderer:
             self._render_one(
                 spec,
                 field,
-                pressure,
                 lead_hour=lead_hour,
                 run_time=run_time,
                 valid_time=valid_time,
@@ -455,6 +536,11 @@ class SynopticMapRenderer:
                     "label": spec.label,
                     "group": spec.group,
                     "unit": spec.unit,
+                    "map_layer": spec.map_layer,
+                    "stops": [
+                        {"value": value, "color": colour}
+                        for value, colour in zip(spec.levels, spec.colours)
+                    ],
                 }
                 for spec in SYNOPTIC_SPECS
                 if spec.key in self.available_layers

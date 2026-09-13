@@ -3,7 +3,7 @@
  * Plugin Name: AROME-PI Météo-France France — Tableaux et cartes
  * Plugin URI: https://github.com/alertesmeteo-hub/arome-pi
  * Description: Module unique de cartes interactives et de prévisions AROME-PI de Météo-France pour la France métropolitaine et la Corse.
- * Version: 1.0.13
+ * Version: 1.0.14
  * Author: Alertes Météo Hub
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('AMPI_VERSION', '1.0.13');
+define('AMPI_VERSION', '1.0.14');
 define('AMPI_RELEASE_DATE', '13/09/2026');
 define('AMPI_OPTION_BASE_URL', 'ampi_national_data_base_url');
 define(
@@ -631,13 +631,6 @@ function ampi_render_shortcode($atts) {
             >Carte France</button>
             <button
                 type="button"
-                class="ampi-tab ampi-tab-map"
-                role="tab"
-                aria-selected="false"
-                data-ampi-tab="map-europe"
-            >Cartes Europe</button>
-            <button
-                type="button"
                 class="ampi-tab"
                 role="tab"
                 aria-selected="false"
@@ -675,20 +668,6 @@ function ampi_render_shortcode($atts) {
                     'titre' => 'Cartes AROME-PI France — résolution 1,3 km',
                     'animation' => 'oui',
                     'vue' => 'france',
-                )
-            );
-            ?>
-        </div>
-
-        <div class="ampi-panel ampi-map-panel" data-ampi-panel="map-europe" hidden>
-            <?php
-            echo ampi_render_map_shortcode(
-                array(
-                    'variable' => 'pression',
-                    'hauteur' => '1050',
-                    'titre' => 'Cartes AROME-PI Europe occidentale',
-                    'animation' => 'oui',
-                    'vue' => 'europe',
                 )
             );
             ?>
@@ -816,9 +795,8 @@ function ampi_render_shortcode($atts) {
             <header class="ampi-static-head">
                 <div>
                     <p class="ampi-kicker">SYNOPTIQUE</p>
-                    <h2>Cartes synoptiques AROME-PI — Matplotlib + Cartopy</h2>
+                    <h2>Cartes synoptiques AROME-PI</h2>
                 </div>
-                <p>Choisissez le champ et l’échéance : chaque PNG est généré côté serveur avec Matplotlib et Cartopy, avec run, validité, isolignes, légende et signature.</p>
             </header>
             <div class="ampi-synoptic-controls" data-ampi-synoptic-controls hidden>
                 <label>
@@ -829,6 +807,7 @@ function ampi_render_shortcode($atts) {
                     <span>Échéance</span>
                     <select data-ampi-synoptic-step aria-label="Choisir une échéance"></select>
                 </label>
+                <div class="ampi-synoptic-layer-buttons" data-ampi-synoptic-layer-buttons aria-label="Accès direct aux cartes"></div>
                 <div class="ampi-synoptic-zoom" aria-label="Zoom de la carte synoptique">
                     <button type="button" data-ampi-synoptic-zoom-out title="Réduire">−</button>
                     <span data-ampi-synoptic-zoom-level>100 %</span>

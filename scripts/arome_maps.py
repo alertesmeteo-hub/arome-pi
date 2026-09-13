@@ -32,25 +32,25 @@ PROBE_DOWNSAMPLE = 2
 PROBE_MAGIC = b"HKV1"
 STATIC_FIELDS = {"altitude_m"}
 CONTOUR_STEPS = {
-    "temperature_c": 1.0,
-    "surface_temperature_c": 1.0,
-    "wind_chill_c": 1.0,
-    "wet_bulb_c": 1.0,
-    "dewpoint_c": 1.0,
-    "humidex": 1.0,
-    "wind_speed_kmh": 5.0,
-    "wind_gust_kmh": 5.0,
-    "wind_gust_max_kmh": 5.0,
-    "pressure_hpa": 2.0,
-    "surface_pressure_hpa": 2.0,
-    "cloud_cover_pct": 5.0,
-    "cloud_low_pct": 5.0,
-    "cloud_mid_pct": 5.0,
-    "cloud_high_pct": 5.0,
-    "humidity_pct": 5.0,
-    "cape_jkg": 100.0,
-    "reflectivity_dbz": 2.0,
-    "freezing_level_m": 100.0,
+    "temperature_c": 0.25,
+    "surface_temperature_c": 0.25,
+    "wind_chill_c": 0.25,
+    "wet_bulb_c": 0.25,
+    "dewpoint_c": 0.25,
+    "humidex": 0.25,
+    "wind_speed_kmh": 1.0,
+    "wind_gust_kmh": 1.0,
+    "wind_gust_max_kmh": 1.0,
+    "pressure_hpa": 1.0,
+    "surface_pressure_hpa": 1.0,
+    "cloud_cover_pct": 2.0,
+    "cloud_low_pct": 2.0,
+    "cloud_mid_pct": 2.0,
+    "cloud_high_pct": 2.0,
+    "humidity_pct": 2.0,
+    "cape_jkg": 50.0,
+    "reflectivity_dbz": 1.0,
+    "freezing_level_m": 50.0,
     "altitude_m": 50.0,
 }
 DEFAULT_BOUNDS = {
@@ -1153,6 +1153,34 @@ class AromeMapRenderer:
         return zip(changes[::2], changes[1::2])
 
     def _department_svg_path(self) -> str:
+        official_path = (
+            self.boundary_directory / "departements-100m.geojson"
+            if self.boundary_directory is not None else None
+        )
+        if official_path is not None and not official_path.is_file():
+            official_path = self.boundary_directory / "departements-1000m.geojson"
+        if official_path is not None and official_path.is_file():
+            with official_path.open("r", encoding="utf-8") as handle:
+                payload = json.load(handle)
+            paths: list[str] = []
+            for feature in payload.get("features", []):
+                code = str(feature.get("properties", {}).get("code", ""))
+                if code not in {f"{number:02d}" for number in range(1, 96)} | {"2A", "2B"}:
+                    continue
+                geometry = feature.get("geometry", {})
+                polygons = geometry.get("coordinates", [])
+                if geometry.get("type") == "Polygon":
+                    polygons = [polygons]
+                for polygon in polygons:
+                    for ring in polygon:
+                        if len(ring) < 2:
+                            continue
+                        pixels = [self._pixel(latitude, longitude) for longitude, latitude in ring]
+                        paths.append(
+                            "M" + " L".join(f"{x:.1f},{y:.1f}" for x, y in pixels) + " Z"
+                        )
+            return " ".join(paths)
+
         if (
             self.france_latitudes is None
             or self.france_longitudes is None

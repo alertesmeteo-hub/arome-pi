@@ -171,7 +171,9 @@
         var renderFrame = null;
         var webgl = null;
         var fallbackContext = null;
-        var maxScale = 64;
+        // Au-delà de x16, on agrandit davantage que la résolution utile
+        // AROME-PI 1,3 km et le rendu devient artificiellement grossier.
+        var maxScale = 16;
         var pendingFocus = null;
         var cityFocus = null;
         var toolMode = null;

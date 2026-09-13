@@ -321,7 +321,7 @@ vm.runInNewContext(scriptSource, context, { filename: scriptPath });
         detail: { latitude: 42.699, longitude: 2.9045, scale: 32 }
     });
     await new Promise(resolve => setTimeout(resolve, 20));
-    assert.equal(elements['zoom-level'].textContent, '3200 %');
+    assert.equal(elements['zoom-level'].textContent, '1600 %');
     elements.reset.click();
     await new Promise(resolve => setTimeout(resolve, 20));
 
@@ -351,14 +351,14 @@ vm.runInNewContext(scriptSource, context, { filename: scriptPath });
     elements.viewport.dispatch('pointerup', { pointerId: 11, clientX: 700, clientY: 370 });
     assert.equal(elements.viewport.classList.contains('is-dragging'), false);
     for (let index = 0; index < 15; index += 1) elements['zoom-in'].click();
-    assert.equal(elements['zoom-level'].textContent, '6400 %');
+    assert.equal(elements['zoom-level'].textContent, '1600 %');
     assert.equal(elements['zoom-in'].disabled, true);
     assert.ok(
         scriptSource.includes('entry.department && transform.scale > 14') &&
         scriptSource.includes('(24 - transform.scale) / 10'),
         'Les limites départementales doivent être atténuées progressivement aux zooms extrêmes'
     );
-    console.log(`Widget cartographique: ${expectWebgl ? 'WebGL' : 'Canvas de secours'}, valeur au survol et zoom 6400 % OK`);
+    console.log(`Widget cartographique: ${expectWebgl ? 'WebGL' : 'Canvas de secours'}, valeur au survol et zoom 1600 % OK`);
 })().catch(error => {
     console.error(error);
     process.exitCode = 1;

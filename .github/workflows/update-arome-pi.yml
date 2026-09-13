@@ -70,7 +70,13 @@ jobs:
           assert len(maps["layers"]) >= 2
           assert len(maps["steps"]) >= 6
           assert synoptic["generator"] == "Matplotlib + Cartopy"
-          assert len(synoptic["layers"]) >= 2
+          expected_synoptic = {
+              "temperature_2m", "point_rosee", "precipitations_1h",
+              "cumul_precipitations", "cumul_neige",
+              "cumul_neige_graupel", "vent_10m", "rafales_10m",
+              "rafales_max_10m", "humidite_relative", "sbcape", "iso_zero",
+          }
+          assert expected_synoptic <= set(synoptic["layers"])
           assert len(synoptic["steps"]) >= 6
           assert (root / "departements/66.json").is_file()
           print(

@@ -1989,6 +1989,28 @@
     white-space: nowrap;
 }
 
+.ampi-synoptic-layer-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    grid-column: 1 / -1;
+}
+
+.ampi-synoptic-layer-buttons button {
+    min-height: 38px;
+    padding: 7px 11px;
+    border-color: #7894a8;
+    background: #edf4f8;
+    color: #173f5f;
+    font-size: .78rem;
+}
+
+.ampi-synoptic-layer-buttons button.is-active {
+    border-color: #0d5d96;
+    background: #0d5d96;
+    color: #fff;
+}
+
 .ampi-synoptic-tools,
 .ampi-synoptic-time {
     display: flex;
@@ -2075,6 +2097,7 @@
     transform-origin: center center;
     will-change: transform;
     -webkit-user-drag: none;
+    z-index: 1;
 }
 
 .ampi-static-art.is-dragging {

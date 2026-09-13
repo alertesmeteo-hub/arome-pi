@@ -874,6 +874,7 @@
         var staticGallery = app.querySelector('[data-ampi-static-gallery]');
         var synopticControls = app.querySelector('[data-ampi-synoptic-controls]');
         var synopticLayer = app.querySelector('[data-ampi-synoptic-layer]');
+        var synopticLayerButtons = app.querySelector('[data-ampi-synoptic-layer-buttons]');
         var synopticStep = app.querySelector('[data-ampi-synoptic-step]');
         var synopticFullscreen = app.querySelector('[data-ampi-synoptic-fullscreen]');
         var synopticZoomIn = app.querySelector('[data-ampi-synoptic-zoom-in]');
@@ -985,11 +986,10 @@
             app.dataset.activeView = view;
             if (view === 'storms') { window.requestAnimationFrame(updateStormTopScroll); }
             if (view === 'snow') { window.requestAnimationFrame(updateSnowTopScroll); }
-            if (view === 'map-france' || view === 'map-europe') {
+            if (view === 'map-france') {
                 window.requestAnimationFrame(function () {
-                    var viewName = view === 'map-europe' ? 'europe' : 'france';
                     var selectedMap = app.querySelector(
-                        '[data-ampim-app][data-map-view="' + viewName + '"]'
+                        '[data-ampim-app][data-map-view="france"]'
                     );
                     if (selectedMap) {
                         selectedMap.dispatchEvent(new CustomEvent('ampim:refresh'));
@@ -1024,7 +1024,7 @@
             var date = new Date(value);
             if (!Number.isFinite(date.getTime())) { return '—'; }
             var options = {
-                timeZone: 'UTC', weekday: 'long', day: 'numeric',
+                timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric',
                 month: 'long', year: 'numeric'
             };
             if (withHour) {
@@ -1032,15 +1032,17 @@
                 options.minute = '2-digit';
                 options.hourCycle = 'h23';
             }
-            return new Intl.DateTimeFormat('fr-FR', options).format(date) +
-                (withHour ? ' UTC' : '');
+            return new Intl.DateTimeFormat('fr-FR', options).format(date);
         }
 
         function staticRunLabel(value) {
             var date = new Date(value);
             if (!Number.isFinite(date.getTime())) { return 'Run indisponible'; }
-            return String(date.getUTCHours()).padStart(2, '0') + 'Z ' +
-                staticUtcDate(value, false);
+            return 'Run du ' + new Intl.DateTimeFormat('fr-FR', {
+                timeZone: 'Europe/Paris', day: '2-digit', month: '2-digit',
+                year: 'numeric', hour: '2-digit', minute: '2-digit',
+                hourCycle: 'h23'
+            }).format(date).replace(':', 'h');
         }
 
         function buildStaticLegend(layer) {
@@ -1162,12 +1164,17 @@
                         throw new Error('manifeste cartographique invalide');
                     }
                     var preferred = [
-                        { label: 'Température', keys: ['temperature_pression'] },
-                        { label: 'Précipitations', keys: ['precipitations_pression'] },
-                        { label: 'Vent', keys: ['rafales_pression'] },
-                        { label: 'Nuages et humidité', keys: ['humidite_pression'] },
-                        { label: 'Instabilité', keys: ['sbcape_pression'] },
-                        { label: 'Pression et altitude', keys: ['iso_zero_pression'] }
+                        { label: 'Températures', keys: ['temperature_2m', 'point_rosee'] },
+                        { label: 'Précipitations', keys: [
+                            'precipitations_1h', 'cumul_precipitations',
+                            'cumul_neige', 'cumul_neige_graupel'
+                        ] },
+                        { label: 'Vent', keys: [
+                            'vent_10m', 'rafales_10m', 'rafales_max_10m'
+                        ] },
+                        { label: 'Nuages et humidité', keys: ['humidite_relative'] },
+                        { label: 'Instabilité', keys: ['sbcape'] },
+                        { label: 'Altitude', keys: ['iso_zero'] }
                     ];
                     var version = maps.generated_at || '';
                     var availableLayers = [];
@@ -1194,6 +1201,21 @@
                     });
                     if (!availableLayers.length) {
                         throw new Error('aucune carte synoptique disponible');
+                    }
+
+                    if (synopticLayerButtons) {
+                        synopticLayerButtons.replaceChildren();
+                        availableLayers.forEach(function (key) {
+                            var button = document.createElement('button');
+                            button.type = 'button';
+                            button.dataset.synopticLayerKey = key;
+                            button.textContent = maps.layers[key].label || key;
+                            button.addEventListener('click', function () {
+                                synopticLayer.value = key;
+                                renderSynoptic();
+                            });
+                            synopticLayerButtons.appendChild(button);
+                        });
                     }
 
                     synopticStep.replaceChildren();
@@ -1245,12 +1267,27 @@
                         weather.alt = layer.label + ' — ' + valid;
                         weather.loading = 'eager';
                         art.appendChild(weather);
+                        art.appendChild(buildStaticLegend(layer));
+                        var brand = document.createElement('a');
+                        brand.className = 'ampi-static-brand';
+                        brand.href = 'https://www.alertes-meteo.com/';
+                        brand.target = '_blank';
+                        brand.rel = 'noopener noreferrer';
+                        brand.textContent = 'www.alertes-meteo.com';
+                        art.appendChild(brand);
                         card.appendChild(art);
                         staticGallery.appendChild(card);
                         resetSynopticZoom();
                         if (synopticPrevious) { synopticPrevious.disabled = stepIndex <= 0; }
                         if (synopticNext) {
                             synopticNext.disabled = stepIndex >= maps.steps.length - 1;
+                        }
+                        if (synopticLayerButtons) {
+                            synopticLayerButtons.querySelectorAll('button').forEach(function (button) {
+                                var active = button.dataset.synopticLayerKey === key;
+                                button.classList.toggle('is-active', active);
+                                button.setAttribute('aria-pressed', active ? 'true' : 'false');
+                            });
                         }
                     }
 
