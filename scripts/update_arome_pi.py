@@ -220,6 +220,7 @@ MAP_FIELDS = {
     "snow_mm",
     "snow_water_equivalent_mm",
     "snow_depth_cm",
+    "snowfall_total_mm",
     "graupel_mm",
     "snow_graupel_total_mm",
     "wind_speed_kmh",

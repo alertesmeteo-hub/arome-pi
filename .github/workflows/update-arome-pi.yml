@@ -76,6 +76,7 @@ jobs:
               "cumul_neige_graupel", "vent_10m", "rafales_10m",
               "rafales_max_10m", "humidite_relative", "sbcape", "iso_zero",
           }
+          print("Couches synoptiques produites :", ", ".join(sorted(synoptic["layers"])))
           assert expected_synoptic <= set(synoptic["layers"])
           assert len(synoptic["steps"]) >= 6
           assert (root / "departements/66.json").is_file()
