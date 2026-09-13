@@ -46,8 +46,14 @@ class AromePipelineTests(unittest.TestCase):
         resources = [
             *(self.resource(group, lead, run_b) for group in API_FIELDS for lead in range(1, 3)),
         ]
-        resources = [r for r in resources if not (r.group == "GUST_V" and r.run_text == run_b)]
-        resources.extend(self.resource("GUST_V", lead, run_a) for lead in range(1, 3))
+        resources = [
+            r
+            for r in resources
+            if not (r.group == "PRECIPITATION" and r.run_text == run_b)
+        ]
+        resources.extend(
+            self.resource("PRECIPITATION", lead, run_a) for lead in range(1, 3)
+        )
         with self.assertRaisesRegex(
             IncompleteRunError, "Catalogue AROME-PI en cours de synchronisation"
         ):
@@ -68,14 +74,32 @@ class AromePipelineTests(unittest.TestCase):
         self.assertEqual(selected["GUST_U", 2].run_text, older)
         self.assertEqual(selected["REFLECTIVITY", 1].run_text, older)
 
+    def test_resource_selection_accepts_missing_optional_field(self) -> None:
+        run = "2026-08-21T09:00:00Z"
+        resources = [
+            self.resource(group, lead, run)
+            for group in API_FIELDS
+            for lead in range(1, 3)
+            if group != "ISO_ZERO"
+        ]
+        selected, run_time = choose_resources(resources, 2)
+        self.assertEqual(run_time, datetime(2026, 8, 21, 9, tzinfo=timezone.utc))
+        self.assertNotIn(("ISO_ZERO", 1), selected)
+
     def test_catalog_retry_accepts_run_after_transient_replacement(self) -> None:
         old = "2026-08-21T06:00:00Z"
         new = "2026-08-21T09:00:00Z"
         mixed = [
             *(self.resource(group, lead, new) for group in API_FIELDS for lead in range(1, 2)),
         ]
-        mixed = [r for r in mixed if not (r.group == "GUST_V" and r.run_text == new)]
-        mixed.extend(self.resource("GUST_V", lead, old) for lead in range(1, 2))
+        mixed = [
+            r
+            for r in mixed
+            if not (r.group == "PRECIPITATION" and r.run_text == new)
+        ]
+        mixed.extend(
+            self.resource("PRECIPITATION", lead, old) for lead in range(1, 2)
+        )
         complete = [
             *(
                 self.resource(group, lead, new)
