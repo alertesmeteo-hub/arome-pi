@@ -1089,7 +1089,7 @@
             }
 
             function changeSynopticZoom(multiplier) {
-                var next = Math.max(1, Math.min(5,
+                var next = Math.max(1, Math.min(3,
                     synopticTransform.scale * multiplier));
                 if (next === 1) {
                     synopticTransform.x = 0;

@@ -17,14 +17,51 @@ import cartopy.crs as ccrs
 from cartopy.io import shapereader
 import matplotlib.pyplot as plt
 from matplotlib.colors import BoundaryNorm, LinearSegmentedColormap
+import matplotlib.patheffects as path_effects
 import numpy as np
 from scipy.ndimage import gaussian_filter
+from shapely.geometry import shape
 
 
 # L'emprise source reste celle du raster AROME Europe de l'Ouest. Seule la
 # fenêtre affichée est resserrée sur la France métropolitaine, avec la Corse
 # entière et une petite marge permettant de lire les systèmes entrants.
 FRANCE_DISPLAY_EXTENT = (-6.5, 10.5, 41.0, 52.0)
+
+# Villes de repère, volontairement limitées aux principaux centres pour garder
+# une carte lisible. Les décalages évitent que le libellé masque le point.
+FRANCE_CITIES = (
+    ("Brest", 48.3904, -4.4861, 5, 4),
+    ("Rennes", 48.1173, -1.6778, 5, 4),
+    ("Nantes", 47.2184, -1.5536, 5, -9),
+    ("Caen", 49.1829, -0.3707, 5, 4),
+    ("Rouen", 49.4432, 1.0993, 5, 4),
+    ("Lille", 50.6292, 3.0573, 5, 4),
+    ("Amiens", 49.8941, 2.2957, -5, -9),
+    ("Paris", 48.8566, 2.3522, 5, 4),
+    ("Reims", 49.2583, 4.0317, 5, 4),
+    ("Metz", 49.1193, 6.1757, 5, 4),
+    ("Strasbourg", 48.5734, 7.7521, 5, 4),
+    ("Orléans", 47.9030, 1.9093, 5, 4),
+    ("Tours", 47.3941, 0.6848, 5, -9),
+    ("Dijon", 47.3220, 5.0415, 5, 4),
+    ("Besançon", 47.2378, 6.0241, 5, -9),
+    ("Poitiers", 46.5802, 0.3404, 5, 4),
+    ("La Rochelle", 46.1603, -1.1511, 5, -9),
+    ("Limoges", 45.8336, 1.2611, 5, 4),
+    ("Clermont-Fd", 45.7772, 3.0870, 5, -9),
+    ("Lyon", 45.7640, 4.8357, 5, 4),
+    ("Grenoble", 45.1885, 5.7245, 5, -9),
+    ("Bordeaux", 44.8378, -0.5792, 5, 4),
+    ("Pau", 43.2951, -0.3708, 5, 4),
+    ("Toulouse", 43.6047, 1.4442, 5, 4),
+    ("Perpignan", 42.6887, 2.8948, 5, 4),
+    ("Montpellier", 43.6108, 3.8767, 5, -9),
+    ("Marseille", 43.2965, 5.3698, 5, 4),
+    ("Nice", 43.7102, 7.2620, 5, 4),
+    ("Ajaccio", 41.9192, 8.7386, 5, 4),
+    ("Bastia", 42.6973, 9.4509, 5, 4),
+)
 
 
 @dataclass(frozen=True)
@@ -163,6 +200,27 @@ class SynopticMapRenderer:
         )
 
     def _add_boundaries(self, axis) -> None:
+        departments_path = self.boundary_directory / "departements-1000m.geojson"
+        if departments_path.is_file():
+            with departments_path.open("r", encoding="utf-8") as handle:
+                payload = json.load(handle)
+            geometries = [
+                shape(feature["geometry"])
+                for feature in payload.get("features", [])
+                if str(feature.get("properties", {}).get("code", ""))
+                in {
+                    f"{number:02d}" for number in range(1, 96)
+                } | {"2A", "2B"}
+            ]
+            axis.add_geometries(
+                geometries,
+                crs=ccrs.PlateCarree(),
+                facecolor="none",
+                edgecolor="#343a40",
+                linewidth=0.62,
+                alpha=0.88,
+                zorder=7,
+            )
         for filename, colour, linewidth in (
             ("ne_50m_admin_0_boundary_lines_land.shp", "#5f6670", 0.55),
             ("ne_50m_coastline.shp", "#30343a", 0.8),
@@ -177,6 +235,35 @@ class SynopticMapRenderer:
                     linewidth=linewidth,
                     zorder=8,
                 )
+
+    @staticmethod
+    def _add_cities(axis) -> None:
+        transform = ccrs.PlateCarree()
+        halo = [path_effects.withStroke(linewidth=2.1, foreground="#ffffff")]
+        for name, latitude, longitude, offset_x, offset_y in FRANCE_CITIES:
+            axis.plot(
+                longitude,
+                latitude,
+                marker="o",
+                markersize=2.7,
+                markerfacecolor="#111111",
+                markeredgecolor="#ffffff",
+                markeredgewidth=0.55,
+                transform=transform,
+                zorder=10,
+            )
+            axis.annotate(
+                name,
+                xy=(longitude, latitude),
+                xytext=(offset_x, offset_y),
+                textcoords="offset points",
+                color="#151515",
+                fontsize=6.3,
+                fontweight="bold",
+                path_effects=halo,
+                transform=transform,
+                zorder=11,
+            )
 
     @staticmethod
     def _iso(value: datetime | None) -> str | None:
@@ -222,8 +309,13 @@ class SynopticMapRenderer:
             f"ampi_{spec.key}", spec.colours, N=max(256, len(spec.levels) * 16)
         )
         norm = BoundaryNorm(spec.levels, cmap.N, extend=spec.extend)
-        fig = plt.figure(figsize=(15.5, 11.6), dpi=140, facecolor="white")
-        axis = fig.add_axes((0.035, 0.075, 0.855, 0.84), projection=ccrs.PlateCarree())
+        fig = plt.figure(figsize=(16, 12), dpi=200, facecolor="white")
+        projection = ccrs.LambertConformal(
+            central_longitude=2.0,
+            central_latitude=46.5,
+            standard_parallels=(44.0, 49.0),
+        )
+        axis = fig.add_axes((0.035, 0.075, 0.855, 0.84), projection=projection)
         axis.set_extent(FRANCE_DISPLAY_EXTENT, crs=ccrs.PlateCarree())
         filled = axis.contourf(
             longitude_grid,
@@ -285,6 +377,7 @@ class SynopticMapRenderer:
                 )
 
         self._add_boundaries(axis)
+        self._add_cities(axis)
         axis.set_xticks([])
         axis.set_yticks([])
 
