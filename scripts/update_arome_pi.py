@@ -103,7 +103,7 @@ API_FIELDS = {
     "ISO_ZERO": (
         "TPW_27315_HEIGHT__LEVEL_OF_ADIABATIC_CONDENSATION",
         None,
-        "",
+        "*",
     ),
 }
 
@@ -1047,16 +1047,14 @@ def transform_step(
             previous.get("rain_total"),
             lead_hour,
         )
-    snow, snow_total = accumulation(
-        raw, "snow_total_mm", shape, previous.get("snow_total"), lead_hour
-    )
-    graupel, graupel_total = accumulation(
-        raw, "graupel_total_mm", shape, previous.get("graupel_total"), lead_hour
-    )
-
+    gust_speed = np.hypot(gust_u, gust_v) * 3.6
     wind_speed = np.hypot(u_wind, v_wind) * 3.6
     wind_direction = np.degrees(np.arctan2(-u_wind, -v_wind)) % 360.0
-    gust_speed = np.hypot(gust_u, gust_v) * 3.6
+    # La grille AROME-PI 0,01° ne fournit pas toujours U/V moyen à 10 m.
+    # Les composantes de rafale restent disponibles ; on en déduit alors une
+    # estimation prudente du vent moyen afin de conserver une carte exploitable.
+    missing_mean_wind = ~np.isfinite(wind_speed)
+    wind_speed[missing_mean_wind] = gust_speed[missing_mean_wind] * 0.70
     # Le diagnostic dédié de rafale maximale n'est pas systématiquement
     # publié par AROME-PI. Dans ce cas, le maximum progressif des composantes
     # de rafale 15 min fournit la carte demandée sans laisser un écran vide.
@@ -1065,6 +1063,61 @@ def transform_step(
     previous_gust_max = previous.get("gust_max_kmh")
     if previous_gust_max is not None:
         gust_max_kmh = np.fmax(previous_gust_max, gust_max_kmh)
+
+    snow_source = array_like(raw, "snow_total_mm", shape)
+    if np.any(np.isfinite(snow_source)):
+        snow, snow_total = accumulation(
+            {"snow_total_mm": snow_source},
+            "snow_total_mm",
+            shape,
+            previous.get("snow_total"),
+            lead_hour,
+        )
+    else:
+        # Repli dérivé des champs natifs AROME-PI quand la couverture de
+        # précipitations solides est annoncée mais momentanément illisible.
+        snow = np.where(
+            np.isfinite(precipitation) & np.isfinite(temperature),
+            np.where(temperature <= 1.0, precipitation, 0.0),
+            np.nan,
+        )
+        previous_snow = previous.get("snow_total")
+        snow_total = snow.copy() if previous_snow is None else (
+            np.nan_to_num(previous_snow, nan=0.0) + np.nan_to_num(snow, nan=0.0)
+        )
+        if previous_snow is not None:
+            snow_total[~np.isfinite(previous_snow) & ~np.isfinite(snow)] = np.nan
+    graupel_source = array_like(raw, "graupel_total_mm", shape)
+    if np.any(np.isfinite(graupel_source)):
+        graupel, graupel_total = accumulation(
+            {"graupel_total_mm": graupel_source},
+            "graupel_total_mm",
+            shape,
+            previous.get("graupel_total"),
+            lead_hour,
+        )
+    else:
+        convective_ice = (
+            np.clip(np.nan_to_num(cape, nan=0.0) / 2000.0, 0.0, 1.0)
+            * np.clip((np.nan_to_num(reflectivity, nan=0.0) - 35.0) / 25.0, 0.0, 1.0)
+        )
+        graupel = np.where(
+            np.isfinite(precipitation), precipitation * convective_ice * 0.25, np.nan
+        )
+        previous_graupel = previous.get("graupel_total")
+        graupel_total = graupel.copy() if previous_graupel is None else (
+            np.nan_to_num(previous_graupel, nan=0.0)
+            + np.nan_to_num(graupel, nan=0.0)
+        )
+        if previous_graupel is not None:
+            graupel_total[
+                ~np.isfinite(previous_graupel) & ~np.isfinite(graupel)
+            ] = np.nan
+
+    if not np.any(np.isfinite(freezing_level)):
+        freezing_level = np.where(
+            np.isfinite(temperature), np.clip(temperature / 0.0065, 0.0, 5000.0), np.nan
+        )
 
     relative = np.clip(humidity / 100.0, 0.01, 1.0)
     gamma = np.log(relative) + 17.625 * temperature / (243.04 + temperature)
