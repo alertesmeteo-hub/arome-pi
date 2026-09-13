@@ -64,6 +64,16 @@ API_FIELDS = {
     ),
     "PRESSURE": ("PRESSURE__SEA_SURFACE", None, ""),
     "LOW_CLOUD": ("LOW_CLOUD_COVER__GROUND_OR_WATER_SURFACE", None, ""),
+    "WIND_U": (
+        "U_COMPONENT_OF_WIND__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND",
+        10,
+        "",
+    ),
+    "WIND_V": (
+        "V_COMPONENT_OF_WIND__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND",
+        10,
+        "",
+    ),
     "GUST_U": (
         "U_COMPONENT_OF_WIND_GUST_15MIN__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND",
         10,
@@ -75,8 +85,11 @@ API_FIELDS = {
         "",
     ),
     "REFLECTIVITY": ("REFLECTIVITY_MAX_DBZ__GROUND_OR_WATER_SURFACE", None, ""),
-    "SNOW": ("TOTAL_SNOW_PRECIPITATION__GROUND_OR_WATER_SURFACE", None, ""),
-    "GRAUPEL": ("GRAUPEL__GROUND_OR_WATER_SURFACE", None, ""),
+    # Les cumuls solides AROME-PI peuvent être publiés avec un suffixe de
+    # fenêtre temporelle (_PT15M, _PT1H…). Le catalogue courant expose
+    # SOLID_PRECIPITATION pour le réseau le plus récent.
+    "SNOW": ("SOLID_PRECIPITATION__GROUND_OR_WATER_SURFACE", None, "*"),
+    "GRAUPEL": ("GRAUPEL__GROUND_OR_WATER_SURFACE", None, "*"),
     "CAPE": (
         "CONVECTIVE_AVAILABLE_POTENTIAL_ENERGY__GROUND_OR_WATER_SURFACE",
         None,
@@ -88,7 +101,7 @@ API_FIELDS = {
         "",
     ),
     "ISO_ZERO": (
-        "TPLV_27315_HEIGHT__LEVEL_OF_ADIABATIC_CONDENSATION",
+        "TPW_27315_HEIGHT__LEVEL_OF_ADIABATIC_CONDENSATION",
         None,
         "",
     ),
@@ -110,6 +123,8 @@ RESOURCE_FIELDS = {
     "PRECIPITATION": "precipitation_hourly_mm",
     "PRESSURE": "pressure_msl_pa",
     "LOW_CLOUD": "cloud_low_pct",
+    "WIND_U": "wind_u_ms",
+    "WIND_V": "wind_v_ms",
     "GUST_U": "gust_u_ms",
     "GUST_V": "gust_v_ms",
     "REFLECTIVITY": "reflectivity_dbz",
@@ -162,6 +177,7 @@ VALUE_COLUMNS = (
     "snowfall_mm",
     "snow_fresh_cm",
     "snow_depth_cm",
+    "snowfall_total_mm",
     "snow_water_equivalent_mm",
     "snow_stick_risk_code",
     "snow_phase_code",
@@ -512,8 +528,9 @@ def api_resources(session: requests.Session) -> list[Resource]:
     )
     resources: list[Resource] = []
     for group, (field_name, height, suffix) in API_FIELDS.items():
+        suffix_pattern = r"(?:_PT[^_]+)?" if suffix == "*" else re.escape(suffix)
         pattern = re.compile(
-            rf"^{re.escape(field_name)}___(\d{{4}}-\d{{2}}-\d{{2}}T\d{{2}}\.\d{{2}}\.\d{{2}}Z){re.escape(suffix)}$"
+            rf"^{re.escape(field_name)}___(\d{{4}}-\d{{2}}-\d{{2}}T\d{{2}}\.\d{{2}}\.\d{{2}}Z){suffix_pattern}$"
         )
         for coverage in sorted(coverage_ids):
             match = pattern.match(coverage)
@@ -1040,6 +1057,14 @@ def transform_step(
     wind_speed = np.hypot(u_wind, v_wind) * 3.6
     wind_direction = np.degrees(np.arctan2(-u_wind, -v_wind)) % 360.0
     gust_speed = np.hypot(gust_u, gust_v) * 3.6
+    # Le diagnostic dédié de rafale maximale n'est pas systématiquement
+    # publié par AROME-PI. Dans ce cas, le maximum progressif des composantes
+    # de rafale 15 min fournit la carte demandée sans laisser un écran vide.
+    gust_max_kmh = np.maximum(gust_max, 0.0) * 3.6
+    gust_max_kmh = np.where(np.isfinite(gust_max_kmh), gust_max_kmh, gust_speed)
+    previous_gust_max = previous.get("gust_max_kmh")
+    if previous_gust_max is not None:
+        gust_max_kmh = np.fmax(previous_gust_max, gust_max_kmh)
 
     relative = np.clip(humidity / 100.0, 0.01, 1.0)
     gamma = np.log(relative) + 17.625 * temperature / (243.04 + temperature)
@@ -1191,7 +1216,7 @@ def transform_step(
         "wind_speed_kmh": rounded(wind_speed, 0),
         "wind_direction_deg": rounded(wind_direction, 0),
         "wind_gust_kmh": rounded(gust_speed, 0),
-        "wind_gust_max_kmh": rounded(np.maximum(gust_max, 0.0) * 3.6, 0),
+        "wind_gust_max_kmh": rounded(gust_max_kmh, 0),
         "pressure_hpa": rounded(pressure, 0),
         "pressure_surface_hpa": rounded(surface_pressure, 0),
         "surface_pressure_hpa": rounded(surface_pressure, 0),
@@ -1225,6 +1250,7 @@ def transform_step(
         "snow_total": snow_total,
         "graupel_total": graupel_total,
         "fresh_snow": snow_depth,
+        "gust_max_kmh": gust_max_kmh,
     }
     return result, state
 
