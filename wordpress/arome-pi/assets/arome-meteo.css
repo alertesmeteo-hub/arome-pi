@@ -1928,7 +1928,7 @@
 
 .ampi-synoptic-controls {
     display: grid;
-    grid-template-columns: minmax(250px, 1.8fr) minmax(220px, 1fr) auto;
+    grid-template-columns: minmax(250px, 1.5fr) minmax(220px, 1fr) auto;
     align-items: end;
     gap: 12px;
     margin-bottom: 16px;
@@ -1987,6 +1987,32 @@
     justify-content: flex-end;
     gap: 7px;
     white-space: nowrap;
+}
+
+.ampi-synoptic-tools,
+.ampi-synoptic-time {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    grid-column: 1 / -1;
+}
+
+.ampi-synoptic-tools {
+    flex-wrap: wrap;
+}
+
+.ampi-synoptic-time {
+    justify-content: flex-end;
+}
+
+.ampi-synoptic-time button {
+    min-width: 54px;
+    font-size: 1.05rem;
+}
+
+.ampi-synoptic-controls button:disabled {
+    cursor: not-allowed;
+    opacity: .42;
 }
 
 .ampi-synoptic-zoom button {
@@ -2184,6 +2210,17 @@
     .ampi-synoptic-zoom {
         flex-wrap: wrap;
         justify-content: stretch;
+    }
+
+    .ampi-synoptic-tools,
+    .ampi-synoptic-time {
+        justify-content: stretch;
+    }
+
+    .ampi-synoptic-tools button,
+    .ampi-synoptic-time button {
+        flex: 1 1 auto;
+        width: auto;
     }
 
     .ampi-synoptic-zoom button {

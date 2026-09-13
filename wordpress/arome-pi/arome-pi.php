@@ -3,7 +3,7 @@
  * Plugin Name: AROME-PI Météo-France France — Tableaux et cartes
  * Plugin URI: https://github.com/alertesmeteo-hub/arome-pi
  * Description: Module unique de cartes interactives et de prévisions AROME-PI de Météo-France pour la France métropolitaine et la Corse.
- * Version: 1.0.10
+ * Version: 1.0.12
  * Author: Alertes Météo Hub
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -14,8 +14,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('AMPI_VERSION', '1.0.10');
-define('AMPI_RELEASE_DATE', '12/09/2026');
+define('AMPI_VERSION', '1.0.12');
+define('AMPI_RELEASE_DATE', '13/09/2026');
 define('AMPI_OPTION_BASE_URL', 'ampi_national_data_base_url');
 define(
     'AMPI_DEFAULT_BASE_URL',
@@ -833,8 +833,16 @@ function ampi_render_shortcode($atts) {
                     <button type="button" data-ampi-synoptic-zoom-out title="Réduire">−</button>
                     <span data-ampi-synoptic-zoom-level>100 %</span>
                     <button type="button" data-ampi-synoptic-zoom-in title="Agrandir">+</button>
-                    <button type="button" data-ampi-synoptic-reset>Recentrer</button>
+                </div>
+                <div class="ampi-synoptic-tools" aria-label="Outils de la carte synoptique">
+                    <button type="button" data-ampi-synoptic-capture title="Télécharger la carte affichée">📷 Capture</button>
+                    <button type="button" data-ampi-synoptic-diagram title="Afficher les diagrammes de la ville choisie">📈 Diagramme</button>
+                    <button type="button" data-ampi-synoptic-reset title="Rétablir le cadrage initial">⌾ Recentrer ville</button>
                     <button type="button" data-ampi-synoptic-fullscreen>⛶ Plein écran</button>
+                </div>
+                <div class="ampi-synoptic-time" aria-label="Navigation dans les échéances synoptiques">
+                    <button type="button" data-ampi-synoptic-previous title="Échéance précédente" aria-label="Échéance précédente">◀</button>
+                    <button type="button" data-ampi-synoptic-next title="Échéance suivante" aria-label="Échéance suivante">▶</button>
                 </div>
             </div>
             <div class="ampi-static-gallery" data-ampi-static-gallery>

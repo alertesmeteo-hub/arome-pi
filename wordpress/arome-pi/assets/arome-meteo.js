@@ -880,6 +880,10 @@
         var synopticZoomOut = app.querySelector('[data-ampi-synoptic-zoom-out]');
         var synopticReset = app.querySelector('[data-ampi-synoptic-reset]');
         var synopticZoomLevel = app.querySelector('[data-ampi-synoptic-zoom-level]');
+        var synopticCapture = app.querySelector('[data-ampi-synoptic-capture]');
+        var synopticDiagram = app.querySelector('[data-ampi-synoptic-diagram]');
+        var synopticPrevious = app.querySelector('[data-ampi-synoptic-previous]');
+        var synopticNext = app.querySelector('[data-ampi-synoptic-next]');
         var chartTemperature = app.querySelector('[data-ampi-chart-temperature]');
         var chartPressure = app.querySelector('[data-ampi-chart-pressure]');
         var chartRain = app.querySelector('[data-ampi-chart-rain]');
@@ -1244,10 +1248,69 @@
                         card.appendChild(art);
                         staticGallery.appendChild(card);
                         resetSynopticZoom();
+                        if (synopticPrevious) { synopticPrevious.disabled = stepIndex <= 0; }
+                        if (synopticNext) {
+                            synopticNext.disabled = stepIndex >= maps.steps.length - 1;
+                        }
+                    }
+
+                    function changeSynopticStep(offset) {
+                        var current = Number(synopticStep.value) || 0;
+                        var next = Math.max(0, Math.min(
+                            maps.steps.length - 1, current + offset
+                        ));
+                        if (next === current) { return; }
+                        synopticStep.value = String(next);
+                        renderSynoptic();
                     }
 
                     synopticLayer.addEventListener('change', renderSynoptic);
                     synopticStep.addEventListener('change', renderSynoptic);
+                    if (synopticPrevious) {
+                        synopticPrevious.addEventListener('click', function () {
+                            changeSynopticStep(-1);
+                        });
+                    }
+                    if (synopticNext) {
+                        synopticNext.addEventListener('click', function () {
+                            changeSynopticStep(1);
+                        });
+                    }
+                    if (synopticCapture) {
+                        synopticCapture.addEventListener('click', function () {
+                            var image = staticGallery.querySelector('.ampi-static-art > img');
+                            if (!image) { return; }
+                            fetch(image.src).then(function (response) {
+                                if (!response.ok) { throw new Error('capture indisponible'); }
+                                return response.blob();
+                            }).then(function (blob) {
+                                var url = URL.createObjectURL(blob);
+                                var link = document.createElement('a');
+                                link.href = url;
+                                link.download = 'arome-pi-synoptique-' +
+                                    (synopticLayer.value || 'carte') + '-' +
+                                    String((Number(synopticStep.value) || 0) + 1).padStart(3, '0') +
+                                    '.png';
+                                document.body.appendChild(link);
+                                link.click();
+                                link.remove();
+                                URL.revokeObjectURL(url);
+                            }).catch(function () {
+                                window.open(image.src, '_blank', 'noopener');
+                            });
+                        });
+                    }
+                    if (synopticDiagram) {
+                        synopticDiagram.addEventListener('click', function () {
+                            setActiveView('general');
+                            var charts = app.querySelector('.ampi-charts');
+                            if (charts) {
+                                window.requestAnimationFrame(function () {
+                                    charts.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                });
+                            }
+                        });
+                    }
                     if (synopticFullscreen) {
                         synopticFullscreen.addEventListener('click', function () {
                             var card = staticGallery.querySelector('.ampi-static-card');

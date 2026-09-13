@@ -18,6 +18,13 @@ from cartopy.io import shapereader
 import matplotlib.pyplot as plt
 from matplotlib.colors import BoundaryNorm, LinearSegmentedColormap
 import numpy as np
+from scipy.ndimage import gaussian_filter
+
+
+# L'emprise source reste celle du raster AROME Europe de l'Ouest. Seule la
+# fenêtre affichée est resserrée sur la France métropolitaine, avec la Corse
+# entière et une petite marge permettant de lire les systèmes entrants.
+FRANCE_DISPLAY_EXTENT = (-6.5, 10.5, 41.0, 52.0)
 
 
 @dataclass(frozen=True)
@@ -30,6 +37,7 @@ class SynopticSpec:
     levels: tuple[float, ...]
     colours: tuple[str, ...]
     extend: str = "both"
+    smoothing_sigma: float = 1.8
 
 
 SYNOPTIC_SPECS = (
@@ -45,6 +53,7 @@ SYNOPTIC_SPECS = (
             "#76d36c", "#c7df3e", "#ffe22d", "#ffad27", "#ff6c22",
             "#e52d2f", "#981d54", "#50113e",
         ),
+        smoothing_sigma=2.2,
     ),
     SynopticSpec(
         "precipitations_pression",
@@ -59,6 +68,7 @@ SYNOPTIC_SPECS = (
             "#f04432", "#c11c75", "#6d1ca5",
         ),
         "max",
+        1.0,
     ),
     SynopticSpec(
         "rafales_pression",
@@ -73,6 +83,7 @@ SYNOPTIC_SPECS = (
             "#781b3b", "#351426",
         ),
         "max",
+        1.2,
     ),
     SynopticSpec(
         "humidite_pression",
@@ -87,6 +98,7 @@ SYNOPTIC_SPECS = (
             "#3d376e",
         ),
         "neither",
+        1.8,
     ),
     SynopticSpec(
         "sbcape_pression",
@@ -100,6 +112,7 @@ SYNOPTIC_SPECS = (
             "#d5e52f", "#ffc62d", "#ff7a22", "#e83028", "#8c1d74",
         ),
         "max",
+        0.9,
     ),
     SynopticSpec(
         "iso_zero_pression",
@@ -113,6 +126,7 @@ SYNOPTIC_SPECS = (
             "#d9dc43", "#f3ae36", "#e76e34", "#c9364b", "#721b64",
             "#3b143f",
         ),
+        smoothing_sigma=2.0,
     ),
 )
 
@@ -168,6 +182,23 @@ class SynopticMapRenderer:
     def _iso(value: datetime | None) -> str | None:
         return value.isoformat().replace("+00:00", "Z") if value else None
 
+    @staticmethod
+    def _smooth(values: np.ndarray, sigma: float) -> np.ndarray:
+        """Lisse un champ sans faire déborder les zones manquantes."""
+        source = np.asarray(values, dtype=np.float64)
+        finite = np.isfinite(source)
+        if not np.any(finite) or sigma <= 0:
+            return source
+        weights = gaussian_filter(
+            finite.astype(np.float64), sigma=sigma, mode="nearest"
+        )
+        smoothed = gaussian_filter(
+            np.where(finite, source, 0.0), sigma=sigma, mode="nearest"
+        )
+        result = np.full(source.shape, np.nan, dtype=np.float64)
+        np.divide(smoothed, weights, out=result, where=weights > 1.0e-6)
+        return result
+
     def _render_one(
         self,
         spec: SynopticSpec,
@@ -181,6 +212,7 @@ class SynopticMapRenderer:
     ) -> None:
         stride = max(1, int(max(self.width, self.height) / 720))
         values = np.asarray(field, dtype=np.float64)[::stride, ::stride]
+        values = self._smooth(values, spec.smoothing_sigma)
         longitudes = self.longitudes[::stride]
         latitudes = self.latitudes[::stride]
         longitude_grid, latitude_grid = np.meshgrid(longitudes, latitudes)
@@ -192,13 +224,7 @@ class SynopticMapRenderer:
         norm = BoundaryNorm(spec.levels, cmap.N, extend=spec.extend)
         fig = plt.figure(figsize=(15.5, 11.6), dpi=140, facecolor="white")
         axis = fig.add_axes((0.035, 0.075, 0.855, 0.84), projection=ccrs.PlateCarree())
-        axis.set_extent(
-            [
-                self.bounds["west"], self.bounds["east"],
-                self.bounds["south"], self.bounds["north"],
-            ],
-            crs=ccrs.PlateCarree(),
-        )
+        axis.set_extent(FRANCE_DISPLAY_EXTENT, crs=ccrs.PlateCarree())
         filled = axis.contourf(
             longitude_grid,
             latitude_grid,
@@ -213,12 +239,18 @@ class SynopticMapRenderer:
         )
         field_span = float(np.nanmax(values) - np.nanmin(values))
         if np.isfinite(field_span) and field_span > 0:
-            contour_count = min(16, max(5, int(field_span / 3)))
+            contour_levels = np.asarray(spec.levels[::2], dtype=np.float64)
+            contour_levels = contour_levels[
+                (contour_levels > np.nanmin(values))
+                & (contour_levels < np.nanmax(values))
+            ]
+            if contour_levels.size < 2:
+                contour_levels = min(8, max(4, int(field_span / 4)))
             contours = axis.contour(
                 longitude_grid,
                 latitude_grid,
                 masked,
-                levels=contour_count,
+                levels=contour_levels,
                 colors="#111111",
                 linewidths=0.6,
                 alpha=0.78,
@@ -229,6 +261,7 @@ class SynopticMapRenderer:
 
         if pressure is not None and np.any(np.isfinite(pressure)):
             pressure_values = np.asarray(pressure, dtype=np.float64)[::stride, ::stride]
+            pressure_values = self._smooth(pressure_values, 2.4)
             pressure_masked = np.ma.masked_invalid(pressure_values)
             pressure_min = max(900, 5 * np.ceil(np.nanmin(pressure_values) / 5))
             pressure_max = min(1080, 5 * np.floor(np.nanmax(pressure_values) / 5))
