@@ -177,7 +177,6 @@ VALUE_COLUMNS = (
     "snowfall_mm",
     "snow_fresh_cm",
     "snow_depth_cm",
-    "snowfall_total_mm",
     "snow_water_equivalent_mm",
     "snow_stick_risk_code",
     "snow_phase_code",
