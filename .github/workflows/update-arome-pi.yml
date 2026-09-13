@@ -58,11 +58,15 @@ jobs:
           root = Path("build/national")
           index = json.loads((root / "index.json").read_text(encoding="utf-8"))
           maps = json.loads((root / "maps/index.json").read_text(encoding="utf-8"))
+          synoptic = json.loads((root / "synoptic/index.json").read_text(encoding="utf-8"))
           assert index["status"] == "ok"
           assert index["coverage"]["communes"] == 34746
           assert index["coverage"]["departments"] == 96
           assert len(maps["layers"]) >= 2
           assert len(maps["steps"]) >= 6
+          assert synoptic["generator"] == "Matplotlib + Cartopy"
+          assert len(synoptic["layers"]) >= 2
+          assert len(synoptic["steps"]) >= 6
           assert (root / "departements/66.json").is_file()
           print(
               f"Validation OK : {len(maps['layers'])} cartes, "
