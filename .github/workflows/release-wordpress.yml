@@ -1,0 +1,55 @@
+name: Publication du module WordPress AROME-PI
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version à publier, sans le préfixe v"
+        required: true
+        default: "1.0.12"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Vérifier la version du module
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ inputs.version }}"
+          grep -Fq "Version: $version" wordpress/arome-pi/arome-pi.php
+          grep -Fq "define('AMPI_VERSION', '$version')" wordpress/arome-pi/arome-pi.php
+
+      - name: Construire le ZIP WordPress
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ inputs.version }}"
+          archive="arome-pi-v${version}.zip"
+          test ! -e "$archive"
+          (
+            cd wordpress
+            zip -rq "../$archive" arome-pi
+          )
+          unzip -t "$archive"
+
+      - name: Publier la release GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ inputs.version }}"
+          archive="arome-pi-v${version}.zip"
+          if gh release view "v${version}" >/dev/null 2>&1; then
+            echo "::error::La release v${version} existe déjà ; aucun écrasement."
+            exit 1
+          fi
+          gh release create "v${version}" "$archive"             --title "AROME-PI WordPress v${version}"             --notes "Cartes synoptiques Matplotlib + Cartopy lissées et recadrées sur la France et la Corse. Ajout des commandes Capture, Diagramme, Recentrer ville, Plein écran et navigation précédente/suivante. Shortcode : [aromepi_meteo]."
+
