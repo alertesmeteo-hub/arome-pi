@@ -35,12 +35,17 @@ jobs:
         env:
           METEOFRANCE_API_KEY: ${{ secrets.METEOFRANCE_API_KEY }}
         run: |
+          extra_args=()
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            extra_args+=(--force)
+          fi
           python scripts/update_arome_pi.py \
             --catalog config/communes-france.json \
             --output-dir build/national \
             --forecast-hours 6 \
             --current-metadata-url \
-            "https://raw.githubusercontent.com/${{ github.repository }}/data/index.json"
+            "https://raw.githubusercontent.com/${{ github.repository }}/data/index.json" \
+            "${extra_args[@]}"
           if test -f build/national/index.json; then
             echo "publish=true" >> "$GITHUB_OUTPUT"
           else
