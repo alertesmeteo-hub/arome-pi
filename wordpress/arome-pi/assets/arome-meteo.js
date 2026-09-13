@@ -872,6 +872,14 @@
         var snowScrollWrap = app.querySelector('[data-ampi-scroll-wrap="snow"]');
         var snowTable = app.querySelector('.ampi-snow-table');
         var staticGallery = app.querySelector('[data-ampi-static-gallery]');
+        var synopticControls = app.querySelector('[data-ampi-synoptic-controls]');
+        var synopticLayer = app.querySelector('[data-ampi-synoptic-layer]');
+        var synopticStep = app.querySelector('[data-ampi-synoptic-step]');
+        var synopticFullscreen = app.querySelector('[data-ampi-synoptic-fullscreen]');
+        var synopticZoomIn = app.querySelector('[data-ampi-synoptic-zoom-in]');
+        var synopticZoomOut = app.querySelector('[data-ampi-synoptic-zoom-out]');
+        var synopticReset = app.querySelector('[data-ampi-synoptic-reset]');
+        var synopticZoomLevel = app.querySelector('[data-ampi-synoptic-zoom-level]');
         var chartTemperature = app.querySelector('[data-ampi-chart-temperature]');
         var chartPressure = app.querySelector('[data-ampi-chart-pressure]');
         var chartRain = app.querySelector('[data-ampi-chart-rain]');
@@ -1008,64 +1016,257 @@
                 (version ? '?v=' + encodeURIComponent(version) : '');
         }
 
+        function staticUtcDate(value, withHour) {
+            var date = new Date(value);
+            if (!Number.isFinite(date.getTime())) { return '—'; }
+            var options = {
+                timeZone: 'UTC', weekday: 'long', day: 'numeric',
+                month: 'long', year: 'numeric'
+            };
+            if (withHour) {
+                options.hour = '2-digit';
+                options.minute = '2-digit';
+                options.hourCycle = 'h23';
+            }
+            return new Intl.DateTimeFormat('fr-FR', options).format(date) +
+                (withHour ? ' UTC' : '');
+        }
+
+        function staticRunLabel(value) {
+            var date = new Date(value);
+            if (!Number.isFinite(date.getTime())) { return 'Run indisponible'; }
+            return String(date.getUTCHours()).padStart(2, '0') + 'Z ' +
+                staticUtcDate(value, false);
+        }
+
+        function buildStaticLegend(layer) {
+            var legend = document.createElement('div');
+            legend.className = 'ampi-static-legend';
+            var label = document.createElement('strong');
+            label.textContent = (layer.label || 'Carte AROME-PI') +
+                (layer.unit ? ' (' + layer.unit + ')' : '');
+            var scale = document.createElement('div');
+            scale.className = 'ampi-static-scale';
+            var stops = Array.isArray(layer.stops) ? layer.stops : [];
+            stops.forEach(function (stop) {
+                var segment = document.createElement('span');
+                segment.style.backgroundColor = stop.color || '#777';
+                var value = document.createElement('small');
+                value.textContent = String(stop.value);
+                segment.appendChild(value);
+                scale.appendChild(segment);
+            });
+            legend.append(label, scale);
+            return legend;
+        }
+
         function buildStaticGallery() {
             if (!staticGallery) { return; }
-            fetchJson(baseUrl + '/maps/index.json', { cache: 'no-cache' })
+            var synopticTransform = { scale: 1, x: 0, y: 0 };
+            var synopticDrag = null;
+
+            function applySynopticTransform() {
+                var image = staticGallery.querySelector('.ampi-static-art > img');
+                if (image) {
+                    image.style.transform = 'translate(' + synopticTransform.x +
+                        'px, ' + synopticTransform.y + 'px) scale(' +
+                        synopticTransform.scale + ')';
+                }
+                if (synopticZoomLevel) {
+                    synopticZoomLevel.textContent = Math.round(
+                        synopticTransform.scale * 100
+                    ) + ' %';
+                }
+            }
+
+            function resetSynopticZoom() {
+                synopticTransform = { scale: 1, x: 0, y: 0 };
+                applySynopticTransform();
+            }
+
+            function changeSynopticZoom(multiplier) {
+                var next = Math.max(1, Math.min(5,
+                    synopticTransform.scale * multiplier));
+                if (next === 1) {
+                    synopticTransform.x = 0;
+                    synopticTransform.y = 0;
+                }
+                synopticTransform.scale = next;
+                applySynopticTransform();
+            }
+
+            if (synopticZoomIn) {
+                synopticZoomIn.addEventListener('click', function () {
+                    changeSynopticZoom(1.25);
+                });
+            }
+            if (synopticZoomOut) {
+                synopticZoomOut.addEventListener('click', function () {
+                    changeSynopticZoom(0.8);
+                });
+            }
+            if (synopticReset) {
+                synopticReset.addEventListener('click', resetSynopticZoom);
+            }
+            staticGallery.addEventListener('wheel', function (event) {
+                if (!staticGallery.querySelector('.ampi-static-art')) { return; }
+                event.preventDefault();
+                changeSynopticZoom(event.deltaY < 0 ? 1.15 : 1 / 1.15);
+            }, { passive: false });
+            staticGallery.addEventListener('pointerdown', function (event) {
+                if (synopticTransform.scale <= 1 || event.button > 0) { return; }
+                var art = event.target.closest('.ampi-static-art');
+                if (!art) { return; }
+                synopticDrag = {
+                    pointerId: event.pointerId,
+                    x: event.clientX,
+                    y: event.clientY
+                };
+                art.setPointerCapture(event.pointerId);
+                art.classList.add('is-dragging');
+            });
+            staticGallery.addEventListener('pointermove', function (event) {
+                if (!synopticDrag || synopticDrag.pointerId !== event.pointerId) {
+                    return;
+                }
+                synopticTransform.x += event.clientX - synopticDrag.x;
+                synopticTransform.y += event.clientY - synopticDrag.y;
+                synopticDrag.x = event.clientX;
+                synopticDrag.y = event.clientY;
+                applySynopticTransform();
+            });
+            function stopSynopticDrag(event) {
+                if (!synopticDrag || synopticDrag.pointerId !== event.pointerId) {
+                    return;
+                }
+                var art = event.target.closest('.ampi-static-art');
+                if (art) { art.classList.remove('is-dragging'); }
+                synopticDrag = null;
+            }
+            staticGallery.addEventListener('pointerup', stopSynopticDrag);
+            staticGallery.addEventListener('pointercancel', stopSynopticDrag);
+            staticGallery.addEventListener('dblclick', function (event) {
+                if (event.target.closest('.ampi-static-art')) {
+                    changeSynopticZoom(1.4);
+                }
+            });
+
+            fetchJson(baseUrl + '/synoptic/index.json', { cache: 'no-cache' })
                 .then(function (maps) {
                     if (!maps || maps.status !== 'ok' || !maps.layers ||
                             !Array.isArray(maps.steps) || !maps.steps.length) {
                         throw new Error('manifeste cartographique invalide');
                     }
                     var preferred = [
-                        'pression', 'temperature', 'pluie_1h',
-                        'rafales', 'reflectivite', 'humidite'
+                        { label: 'Température', keys: ['temperature_pression'] },
+                        { label: 'Précipitations', keys: ['precipitations_pression'] },
+                        { label: 'Vent', keys: ['rafales_pression'] },
+                        { label: 'Nuages et humidité', keys: ['humidite_pression'] },
+                        { label: 'Instabilité', keys: ['sbcape_pression'] },
+                        { label: 'Pression et altitude', keys: ['iso_zero_pression'] }
                     ];
-                    var step = maps.steps[Math.min(1, maps.steps.length - 1)];
                     var version = maps.generated_at || '';
-                    var run = maps.run_time ? fullFormat.format(new Date(maps.run_time)) : '—';
-                    var valid = step.valid_time ? fullFormat.format(new Date(step.valid_time)) : '—';
-                    staticGallery.replaceChildren();
-                    preferred.forEach(function (key) {
+                    var availableLayers = [];
+
+                    if (!synopticLayer || !synopticStep) {
+                        throw new Error('menu synoptique introuvable');
+                    }
+                    synopticLayer.replaceChildren();
+                    preferred.forEach(function (section) {
+                        var group = document.createElement('optgroup');
+                        group.label = section.label;
+                        section.keys.forEach(function (key) {
+                            var exists = maps.steps.some(function (item) {
+                                return item.files && item.files[key];
+                            });
+                            if (!maps.layers[key] || !exists) { return; }
+                            availableLayers.push(key);
+                            var option = document.createElement('option');
+                            option.value = key;
+                            option.textContent = maps.layers[key].label || key;
+                            group.appendChild(option);
+                        });
+                        if (group.children.length) { synopticLayer.appendChild(group); }
+                    });
+                    if (!availableLayers.length) {
+                        throw new Error('aucune carte synoptique disponible');
+                    }
+
+                    synopticStep.replaceChildren();
+                    maps.steps.forEach(function (item, index) {
+                        var option = document.createElement('option');
+                        option.value = String(index);
+                        option.textContent = '+' + String(item.lead_hour).padStart(2, '0') +
+                            ' h — ' + staticUtcDate(item.valid_time, true);
+                        synopticStep.appendChild(option);
+                    });
+                    synopticStep.value = String(Math.min(1, maps.steps.length - 1));
+                    if (synopticControls) { synopticControls.hidden = false; }
+
+                    function renderSynoptic() {
+                        var key = synopticLayer.value || availableLayers[0];
+                        var stepIndex = Math.max(0, Math.min(
+                            maps.steps.length - 1,
+                            Number(synopticStep.value) || 0
+                        ));
+                        var step = maps.steps[stepIndex];
                         var layer = maps.layers[key];
                         var imagePath = step.files && step.files[key];
-                        if (!layer || !imagePath) { return; }
+                        if (!imagePath) {
+                            var replacementIndex = maps.steps.findIndex(function (item) {
+                                return item.files && item.files[key];
+                            });
+                            if (replacementIndex >= 0) {
+                                synopticStep.value = String(replacementIndex);
+                                step = maps.steps[replacementIndex];
+                                imagePath = step.files[key];
+                            }
+                        }
+                        staticGallery.replaceChildren();
+                        if (!layer || !imagePath) {
+                            var unavailable = document.createElement('p');
+                            unavailable.className = 'ampi-message ampi-error';
+                            unavailable.textContent = 'Carte indisponible pour cette échéance.';
+                            staticGallery.appendChild(unavailable);
+                            return;
+                        }
+                        var run = staticRunLabel(maps.run_time);
+                        var valid = staticUtcDate(step.valid_time, true);
                         var card = document.createElement('article');
                         card.className = 'ampi-static-card';
-                        var head = document.createElement('header');
-                        var title = document.createElement('strong');
-                        title.textContent = layer.label + (layer.unit ? ' (' + layer.unit + ')' : '');
-                        var lead = document.createElement('span');
-                        lead.textContent = 'Échéance +' + step.lead_hour + ' h';
-                        head.append(title, lead);
                         var art = document.createElement('div');
                         art.className = 'ampi-static-art';
                         var weather = document.createElement('img');
                         weather.src = staticAssetUrl(imagePath, version);
                         weather.alt = layer.label + ' — ' + valid;
-                        weather.loading = 'lazy';
-                        var borders = document.createElement('img');
-                        borders.className = 'ampi-static-borders';
-                        borders.src = staticAssetUrl(maps.overlay, version);
-                        borders.alt = '';
-                        borders.setAttribute('aria-hidden', 'true');
-                        var brand = document.createElement('span');
-                        brand.className = 'ampi-static-brand';
-                        brand.textContent = 'www.alertes-meteo.com';
-                        art.append(weather, borders, brand);
-                        var footer = document.createElement('footer');
-                        footer.textContent = 'Run ' + run + ' • valable ' + valid;
-                        card.append(head, art, footer);
+                        weather.loading = 'eager';
+                        art.appendChild(weather);
+                        card.appendChild(art);
                         staticGallery.appendChild(card);
-                    });
-                    if (!staticGallery.children.length) {
-                        throw new Error('aucune carte fixe disponible');
+                        resetSynopticZoom();
                     }
+
+                    synopticLayer.addEventListener('change', renderSynoptic);
+                    synopticStep.addEventListener('change', renderSynoptic);
+                    if (synopticFullscreen) {
+                        synopticFullscreen.addEventListener('click', function () {
+                            var card = staticGallery.querySelector('.ampi-static-card');
+                            if (!card) { return; }
+                            if (document.fullscreenElement) {
+                                document.exitFullscreen();
+                            } else if (card.requestFullscreen) {
+                                card.requestFullscreen();
+                            }
+                        });
+                    }
+                    renderSynoptic();
                 })
                 .catch(function (error) {
+                    if (synopticControls) { synopticControls.hidden = true; }
                     staticGallery.replaceChildren();
                     var message = document.createElement('p');
                     message.className = 'ampi-message ampi-error';
-                    message.textContent = 'Cartes fixes indisponibles : ' + error.message;
+                    message.textContent = 'Carte synoptique indisponible : ' + error.message;
                     staticGallery.appendChild(message);
                 });
         }
