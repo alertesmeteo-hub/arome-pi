@@ -3,7 +3,7 @@
  * Plugin Name: AROME-PI Météo-France France — Tableaux et cartes
  * Plugin URI: https://github.com/alertesmeteo-hub/arome-pi
  * Description: Module unique de cartes interactives et de prévisions AROME-PI de Météo-France pour la France métropolitaine et la Corse.
- * Version: 1.0.4
+ * Version: 1.0.10
  * Author: Alertes Météo Hub
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -14,8 +14,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('AMPI_VERSION', '1.0.4');
-define('AMPI_RELEASE_DATE', '11/09/2026');
+define('AMPI_VERSION', '1.0.10');
+define('AMPI_RELEASE_DATE', '12/09/2026');
 define('AMPI_OPTION_BASE_URL', 'ampi_national_data_base_url');
 define(
     'AMPI_DEFAULT_BASE_URL',
@@ -663,7 +663,7 @@ function ampi_render_shortcode($atts) {
                 role="tab"
                 aria-selected="false"
                 data-ampi-tab="static"
-            >Cartes fixes</button>
+            >Synoptique</button>
         </div>
 
         <div class="ampi-panel ampi-map-panel" data-ampi-panel="map-france">
@@ -815,13 +815,30 @@ function ampi_render_shortcode($atts) {
         <div class="ampi-panel ampi-static-panel" data-ampi-panel="static" hidden>
             <header class="ampi-static-head">
                 <div>
-                    <p class="ampi-kicker">CARTES PRÊTES À CONSULTER</p>
-                    <h2>Cartes AROME-PI non interactives</h2>
+                    <p class="ampi-kicker">SYNOPTIQUE</p>
+                    <h2>Cartes synoptiques AROME-PI — Matplotlib + Cartopy</h2>
                 </div>
-                <p>Présentation fixe avec le run, l’échéance et une carte lisible, dans l’esprit de votre exemple.</p>
+                <p>Choisissez le champ et l’échéance : chaque PNG est généré côté serveur avec Matplotlib et Cartopy, avec run, validité, isolignes, légende et signature.</p>
             </header>
+            <div class="ampi-synoptic-controls" data-ampi-synoptic-controls hidden>
+                <label>
+                    <span>Carte synoptique</span>
+                    <select data-ampi-synoptic-layer aria-label="Choisir une carte synoptique"></select>
+                </label>
+                <label>
+                    <span>Échéance</span>
+                    <select data-ampi-synoptic-step aria-label="Choisir une échéance"></select>
+                </label>
+                <div class="ampi-synoptic-zoom" aria-label="Zoom de la carte synoptique">
+                    <button type="button" data-ampi-synoptic-zoom-out title="Réduire">−</button>
+                    <span data-ampi-synoptic-zoom-level>100 %</span>
+                    <button type="button" data-ampi-synoptic-zoom-in title="Agrandir">+</button>
+                    <button type="button" data-ampi-synoptic-reset>Recentrer</button>
+                    <button type="button" data-ampi-synoptic-fullscreen>⛶ Plein écran</button>
+                </div>
+            </div>
             <div class="ampi-static-gallery" data-ampi-static-gallery>
-                <p class="ampi-loading">Chargement des cartes fixes…</p>
+                <p class="ampi-loading">Chargement de la carte synoptique…</p>
             </div>
         </div>
 

@@ -3,7 +3,7 @@ Contributors: alertesmeteo
 Tags: meteo, arome-pi, meteofrance, prevision-immediate, avada
 Requires at least: 5.8
 Requires PHP: 7.4
-Stable tag: 1.0.4
+Stable tag: 1.0.10
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,6 +25,31 @@ AROME-PI est actualisé chaque heure et vise la prévision immédiate jusqu'à 6
 4. Insérez [aromepi_meteo] dans un élément Code ou Shortcode Avada.
 
 == Changelog ==
+
+= 1.0.10 =
+* Ajout du zoom sur les cartes synoptiques : boutons, molette, glisser-déplacer, recentrage et plein écran.
+
+= 1.0.9 =
+* Remplacement du rendu simulé par de véritables PNG synoptiques générés avec Matplotlib et Cartopy.
+* Ajout des isolignes de pression, frontières, palette verticale, run, échéance, validité et signature directement dans chaque image.
+
+= 1.0.8 =
+* L’onglet de cartes fixes devient « Synoptique ».
+* Ajout d’un menu de cartes et d’un menu d’échéances : une seule grande carte est affichée à la fois.
+* Ajout d’un bouton plein écran pour la carte synoptique.
+
+= 1.0.7 =
+* Catalogue « Carte en couleur » complété avec toutes les rubriques demandées.
+* Nouvelles données directes AROME-PI : neige, graupel, SBCAPE, rafales maximales à 10 m et hauteur de l'isotherme 0 °C.
+
+= 1.0.6 =
+* L'onglet « Carte en couleur » reprend la présentation plein cadre du module CEP : run, échéance, légende et signature directement sur la carte.
+* Les cartes colorées sont affichées sur une seule colonne pour rester grandes et lisibles.
+* Rubriques Température, Précipitations, Vent, Nuages & Humidité, Instabilité et Pression & Géopotentiel.
+* Ajout des cartes point de rosée, cumul neige, neige + graupel, cumul de précipitations, rafales maximales à 10 m, SBCAPE et isotherme 0 °C.
+
+= 1.0.5 =
+* L'onglet de cartes non interactives est renommé « Carte en couleur ».
 
 = 1.0.4 =
 * Carte principale agrandie et zoom initial sur la ville rendu plus lisible.
