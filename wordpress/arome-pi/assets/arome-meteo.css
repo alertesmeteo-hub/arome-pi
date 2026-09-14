@@ -456,7 +456,7 @@
     }
 }
 
-/* === Sélecteur Général / Orages / Neige — v2.3 === */
+/* === Navigation principale === */
 .ampi-tabs {
     display: flex;
     flex-wrap: wrap;
@@ -507,6 +507,26 @@
 
 .ampi-panel[hidden] {
     display: none !important;
+}
+
+.ampi-general-table {
+    min-width: 4200px;
+    font-size: .76rem;
+}
+
+.ampi-general-table thead th:nth-child(1),
+.ampi-general-table tbody .ampi-day-cell {
+    position: sticky;
+    left: 0;
+    z-index: 8;
+}
+
+.ampi-general-table thead th:nth-child(2),
+.ampi-general-table tbody .ampi-hour {
+    position: sticky;
+    left: 70px;
+    z-index: 7;
+    box-shadow: 4px 0 8px rgba(20, 78, 104, .08);
 }
 
 .ampi-storm-summary {

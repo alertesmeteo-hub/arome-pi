@@ -865,6 +865,9 @@
         var meta = app.querySelector('[data-ampi-meta]');
         var generated = app.querySelector('[data-ampi-generated]');
         var stale = app.querySelector('[data-ampi-stale]');
+        var generalTopScroll = app.querySelector('[data-ampi-top-scroll="general"]');
+        var generalScrollWrap = app.querySelector('[data-ampi-scroll-wrap="general"]');
+        var generalTable = app.querySelector('.ampi-general-table');
         var stormTopScroll = app.querySelector('[data-ampi-top-scroll="storms"]');
         var stormScrollWrap = app.querySelector('[data-ampi-scroll-wrap="storms"]');
         var stormTable = app.querySelector('.ampi-storm-table');
@@ -959,6 +962,10 @@
             syncTopScroll(stormTopScroll, stormScrollWrap, stormTable);
         }
 
+        function updateGeneralTopScroll() {
+            syncTopScroll(generalTopScroll, generalScrollWrap, generalTable);
+        }
+
         function updateSnowTopScroll() {
             syncTopScroll(snowTopScroll, snowScrollWrap, snowTable);
         }
@@ -974,6 +981,7 @@
             window.addEventListener('resize', updater);
         }
 
+        bindTopScroll(generalTopScroll, generalScrollWrap, updateGeneralTopScroll);
         bindTopScroll(stormTopScroll, stormScrollWrap, updateStormTopScroll);
         bindTopScroll(snowTopScroll, snowScrollWrap, updateSnowTopScroll);
 
@@ -992,6 +1000,7 @@
                 panel.hidden = panel.dataset.ampiPanel !== view;
             });
             app.dataset.activeView = view;
+            if (view === 'general') { window.requestAnimationFrame(updateGeneralTopScroll); }
             if (view === 'storms') { window.requestAnimationFrame(updateStormTopScroll); }
             if (view === 'snow') { window.requestAnimationFrame(updateSnowTopScroll); }
             if (view === 'map-france') {
@@ -1462,7 +1471,7 @@
         }
 
         function showTableMessage(message, error) {
-            putMessage(generalBody, message, error, 10);
+            putMessage(generalBody, message, error, 34);
             putMessage(stormBody, message, error, 13);
             putMessage(snowBody, message, error, 13);
             if (stormSummary) {
@@ -1698,7 +1707,56 @@
                 gustCell.appendChild(gustStrong);
                 row.appendChild(gustCell);
                 appendNumber(row, 'Pression', value(values, 'pressure_hpa', 7), 0, ' hPa');
+                appendNumber(row, 'Visibilité', value(values, 'visibility_km', 8), 1, ' km');
+                appendNumber(row, 'Pression surface', value(values, 'pressure_surface_hpa'), 0, ' hPa');
+                appendNumber(row, 'Point de rosée', value(values, 'dewpoint_c'), 1, ' °C');
+                appendNumber(row, 'Cumul précipitations', value(values, 'precipitation_total_mm'), 1, ' mm');
+                appendNumber(row, 'Nuages bas', value(values, 'cloud_low_pct'), 0, ' %');
+                appendNumber(row, 'Nuages moyens', value(values, 'cloud_mid_pct'), 0, ' %');
+                appendNumber(row, 'Nuages hauts', value(values, 'cloud_high_pct'), 0, ' %');
+                appendNumber(row, 'CAPE', value(values, 'cape_jkg'), 0, ' J/kg');
+                appendNumber(row, 'Réflectivité', value(values, 'reflectivity_dbz'), 0, ' dBZ');
+                appendNumber(row, 'Graupel', value(values, 'graupel_mm'), 2, ' mm');
+
+                var generalThunderCode = value(values, 'thunder_risk_code');
+                var generalThunder = finite(generalThunderCode) ? THUNDER_RISKS[Number(generalThunderCode)] : null;
+                var generalThunderCell = createCell('td', 'Risque orage');
+                generalThunderCell.textContent = generalThunder ? generalThunder.label : '—';
+                row.appendChild(generalThunderCell);
+
+                appendNumber(row, 'LCL', value(values, 'lcl_m'), 0, ' m');
+                appendNumber(row, 'Foudre', value(values, 'lightning_score'), 0, '/100');
+                appendHazard(row, 'Grêle', value(values, 'hail_risk_code'));
+                appendNumber(row, 'Pluie convective', value(values, 'convective_precipitation_mm'), 1, ' mm');
+
+                var generalStormType = value(values, 'storm_type_code');
+                var generalStormCell = createCell('td', 'Type orage');
+                generalStormCell.textContent = finite(generalStormType) ? (STORM_TYPES[Number(generalStormType)] || 'Indéterminé') : '—';
+                row.appendChild(generalStormCell);
+
+                var generalSnowCode = value(values, 'snow_risk_code');
+                var generalSnow = finite(generalSnowCode) ? SNOW_RISKS[Number(generalSnowCode)] : null;
+                var generalSnowCell = createCell('td', 'Risque neige');
+                generalSnowCell.textContent = generalSnow ? generalSnow.label : '—';
+                row.appendChild(generalSnowCell);
+
+                appendNumber(row, 'Neige brute', value(values, 'snowfall_mm'), 2, ' mm');
+                appendNumber(row, 'Neige fraîche', value(values, 'snow_fresh_cm'), 1, ' cm');
+                appendNumber(row, 'Épaisseur neige', value(values, 'snow_depth_cm'), 1, ' cm');
+                appendNumber(row, 'Équivalent eau', value(values, 'snow_water_equivalent_mm'), 2, ' mm');
+
+                var generalStickCode = value(values, 'snow_stick_risk_code');
+                var generalStickCell = createCell('td', 'Tenue');
+                generalStickCell.textContent = finite(generalStickCode) ? (SNOW_STICK[Number(generalStickCode)] || '—') : '—';
+                row.appendChild(generalStickCell);
+
+                var generalPhaseCode = value(values, 'snow_phase_code');
+                var generalPhaseCell = createCell('td', 'Phase');
+                generalPhaseCell.textContent = finite(generalPhaseCode) ? (SNOW_PHASE[Number(generalPhaseCode)] || '—') : '—';
+                row.appendChild(generalPhaseCell);
+                appendNumber(row, 'Cumul neige', value(values, 'snowfall_total_mm'), 2, ' mm');
                 generalBody.appendChild(row);
+                window.requestAnimationFrame(updateGeneralTopScroll);
 
                 // Tableau 2 — diagnostic orageux.
                 var stormRow = document.createElement('tr');

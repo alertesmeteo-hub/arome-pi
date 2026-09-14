@@ -3,7 +3,7 @@
  * Plugin Name: AROME-PI Météo-France France — Tableaux et cartes
  * Plugin URI: https://github.com/alertesmeteo-hub/arome-pi
  * Description: Module unique de cartes interactives et de prévisions AROME-PI de Météo-France pour la France métropolitaine et la Corse.
- * Version: 1.0.15
+ * Version: 1.0.17
  * Author: Alertes Météo Hub
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('AMPI_VERSION', '1.0.15');
+define('AMPI_VERSION', '1.0.17');
 define('AMPI_RELEASE_DATE', '14/09/2026');
 define('AMPI_OPTION_BASE_URL', 'ampi_national_data_base_url');
 define(
@@ -390,12 +390,6 @@ function ampi_render_map_shortcode($atts) {
                 <button
                     type="button"
                     class="ampim-tool-toggle"
-                    data-ampim-recenter-city
-                    title="Recentrer la carte sur la commune choisie"
-                >⌾ Recentrer ville</button>
-                <button
-                    type="button"
-                    class="ampim-tool-toggle"
                     data-ampim-fullscreen
                     title="Afficher la carte en plein écran"
                 >⛶ Plein écran</button>
@@ -578,6 +572,33 @@ function ampi_render_shortcode($atts) {
             <div class="ampi-badge">AROME-PI<br><strong>1,3 km</strong></div>
         </header>
 
+        <?php if ($show_selector) : ?>
+        <div class="ampi-toolbar">
+            <div class="ampi-search">
+                <label for="<?php echo esc_attr($input_id); ?>">Choisissez votre commune</label>
+                <div class="ampi-search-control">
+                    <span class="ampi-search-icon" aria-hidden="true">⌕</span>
+                    <input
+                        id="<?php echo esc_attr($input_id); ?>"
+                        class="ampi-city-input"
+                        type="search"
+                        value="<?php echo esc_attr($city_name); ?>"
+                        autocomplete="off"
+                        aria-autocomplete="list"
+                        aria-controls="<?php echo esc_attr($results_id); ?>"
+                        aria-expanded="false"
+                    >
+                </div>
+                <button type="button" class="ampi-locate-button" data-ampi-locate>📍 Détecter ma ville</button>
+                <div id="<?php echo esc_attr($results_id); ?>" class="ampi-search-results" role="listbox" hidden></div>
+                <p id="<?php echo esc_attr($status_id); ?>" class="ampi-search-status" role="status">Prévisions affichées pour <?php echo esc_html($city_name); ?>.</p>
+            </div>
+            <div class="ampi-coverage">
+                <strong>34&nbsp;746 communes</strong>
+                <span>Métropole et Corse</span>
+            </div>
+        </div>
+        <?php else : ?>
         <div class="ampi-city-state" hidden aria-hidden="true">
             <div class="ampi-search">
                 <input id="<?php echo esc_attr($input_id); ?>" class="ampi-city-input" type="hidden" value="<?php echo esc_attr($city_name); ?>">
@@ -586,6 +607,7 @@ function ampi_render_shortcode($atts) {
                 <p id="<?php echo esc_attr($status_id); ?>" class="ampi-search-status" role="status"></p>
             </div>
         </div>
+        <?php endif; ?>
 
         <p class="ampi-stale" data-ampi-stale role="status" hidden>
             Actualisation AROME-PI retardée.
@@ -601,11 +623,11 @@ function ampi_render_shortcode($atts) {
             >Carte France</button>
             <button
                 type="button"
-                class="ampi-tab ampi-tab-snow"
+                class="ampi-tab ampi-tab-static"
                 role="tab"
                 aria-selected="false"
-                data-ampi-tab="snow"
-            >Neige</button>
+                data-ampi-tab="general"
+            >Tableau</button>
             <button
                 type="button"
                 class="ampi-tab ampi-tab-static"
@@ -630,8 +652,9 @@ function ampi_render_shortcode($atts) {
         </div>
 
         <div class="ampi-panel" data-ampi-panel="general" hidden>
-            <div class="ampi-table-wrap ampi-general-wrap" role="region" aria-label="Prévisions horaires générales" tabindex="0">
-                <table class="ampi-table">
+            <div class="ampi-top-scroll" data-ampi-top-scroll="general" aria-label="Navigation horizontale du tableau complet" hidden><div></div></div>
+            <div class="ampi-table-wrap ampi-general-wrap" data-ampi-scroll-wrap="general" role="region" aria-label="Tableau horaire complet AROME-PI" tabindex="0">
+                <table class="ampi-table ampi-general-table">
                     <thead>
                         <tr>
                             <th scope="col">Date</th>
@@ -644,11 +667,35 @@ function ampi_render_shortcode($atts) {
                             <th scope="col">Vent</th>
                             <th scope="col">Rafales</th>
                             <th scope="col">Pression</th>
+                            <th scope="col">Visibilité</th>
+                            <th scope="col">Pres. surface</th>
+                            <th scope="col">Point rosée</th>
+                            <th scope="col">Cumul précip.</th>
+                            <th scope="col">Nuages bas</th>
+                            <th scope="col">Nuages moyens</th>
+                            <th scope="col">Nuages hauts</th>
+                            <th scope="col">CAPE</th>
+                            <th scope="col">Réflectivité</th>
+                            <th scope="col">Graupel</th>
+                            <th scope="col">Risque orage</th>
+                            <th scope="col">LCL</th>
+                            <th scope="col">Foudre</th>
+                            <th scope="col">Grêle</th>
+                            <th scope="col">Pluie conv.</th>
+                            <th scope="col">Type orage</th>
+                            <th scope="col">Risque neige</th>
+                            <th scope="col">Neige brute</th>
+                            <th scope="col">Neige fraîche</th>
+                            <th scope="col">Épaisseur neige</th>
+                            <th scope="col">Équiv. eau</th>
+                            <th scope="col">Tenue</th>
+                            <th scope="col">Phase</th>
+                            <th scope="col">Cumul neige</th>
                         </tr>
                     </thead>
                     <tbody data-ampi-body-general>
                         <tr>
-                            <td colspan="10" class="ampi-loading">Chargement des prévisions…</td>
+                            <td colspan="34" class="ampi-loading">Chargement du tableau complet…</td>
                         </tr>
                     </tbody>
                 </table>
@@ -780,7 +827,6 @@ function ampi_render_shortcode($atts) {
                 <div class="ampi-synoptic-tools" aria-label="Outils de la carte synoptique">
                     <button type="button" data-ampi-synoptic-capture title="Télécharger la carte affichée">📷 Capture</button>
                     <button type="button" data-ampi-synoptic-diagram title="Afficher les diagrammes de la ville choisie">📈 Diagramme</button>
-                    <button type="button" data-ampi-synoptic-reset title="Rétablir le cadrage initial">⌾ Recentrer ville</button>
                     <button type="button" data-ampi-synoptic-fullscreen>⛶ Plein écran</button>
                 </div>
                 <div class="ampi-synoptic-time" aria-label="Navigation dans les échéances synoptiques">
