@@ -2461,11 +2461,17 @@
                         runLabelUtc(payload.run_time);
                 }
                 if (payload.generated_at) {
+                    var generatedDate = new Date(payload.generated_at);
+                    var generatedLabel = runFormat.format(generatedDate).replace(':', 'h');
+                    var ageHours = Math.max(0, (Date.now() - generatedDate.getTime()) / 3600000);
                     generated.textContent = 'Cartes mises à jour le ' +
-                        runFormat.format(new Date(payload.generated_at)).replace(':', 'h') +
+                        generatedLabel +
                         ' • Module v' + moduleVersion;
-                    stale.hidden = (Date.now() - new Date(payload.generated_at).getTime()) <=
-                        2 * 60 * 60 * 1000;
+                    stale.hidden = !Number.isFinite(ageHours) || ageHours <= 3;
+                    if (!stale.hidden) {
+                        stale.textContent = 'Actualisation AROME-PI retardée : dernières cartes générées le ' +
+                            generatedLabel + ' (il y a ' + Math.floor(ageHours) + ' h).';
+                    }
                 }
                 var steps = availableSteps();
                 currentStep = initialStep(steps);

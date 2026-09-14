@@ -1996,6 +1996,50 @@
     grid-column: 1 / -1;
 }
 
+.ampi-synoptic-timeline {
+    grid-column: 1 / -1;
+    padding: 12px 14px 9px;
+    border: 1px solid #c7d7e1;
+    border-radius: 8px;
+    background: #f7fafc;
+}
+
+.ampi-synoptic-timeline-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 6px;
+    color: #36586f;
+    font-size: .78rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.ampi-synoptic-timeline-head strong,
+.ampi-synoptic-time > strong {
+    padding: 7px 11px;
+    border-radius: 6px;
+    background: #315fa8;
+    color: #fff;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.ampi-synoptic-timeline input[type="range"] {
+    width: 100%;
+    height: 8px;
+    margin: 0;
+    accent-color: #079d93;
+    cursor: ew-resize;
+}
+
+.ampi-synoptic-timeline > small {
+    display: block;
+    margin-top: 5px;
+    color: #597486;
+    font-size: .68rem;
+}
+
 .ampi-synoptic-layer-buttons button {
     min-height: 38px;
     padding: 7px 11px;
@@ -2025,11 +2069,24 @@
 
 .ampi-synoptic-time {
     justify-content: flex-end;
+    padding: 12px;
+    border-radius: 8px;
+    background: #edf2f7;
 }
 
 .ampi-synoptic-time button {
     min-width: 54px;
     font-size: 1.05rem;
+}
+
+.ampi-synoptic-time button.is-playing {
+    border-color: #315fa8;
+    background: #315fa8;
+}
+
+.ampi-synoptic-time > strong {
+    min-width: 74px;
+    text-align: center;
 }
 
 .ampi-synoptic-controls button:disabled {
@@ -2075,6 +2132,41 @@
 .ampi-static-card:fullscreen .ampi-static-art {
     width: min(100vw, calc(100vh * 4 / 3));
     max-height: 100vh;
+}
+
+.ampi-static-panel:fullscreen {
+    box-sizing: border-box;
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    padding: 12px;
+    flex-direction: column;
+    overflow: auto;
+    background: #eef3f7;
+}
+
+.ampi-static-panel:fullscreen .ampi-static-head {
+    display: none;
+}
+
+.ampi-static-panel:fullscreen .ampi-synoptic-controls {
+    position: relative;
+    z-index: 20;
+    display: grid;
+    flex: 0 0 auto;
+    margin-bottom: 10px;
+    padding: 10px;
+}
+
+.ampi-static-panel:fullscreen .ampi-static-gallery {
+    display: grid;
+    min-height: 0;
+    flex: 1 1 auto;
+    place-items: center;
+}
+
+.ampi-static-panel:fullscreen .ampi-static-card {
+    width: min(100%, calc((100vh - 250px) * 4 / 3));
 }
 
 .ampi-static-art {
@@ -2203,12 +2295,12 @@
     right: 10px;
     bottom: 9px;
     z-index: 3;
-    padding: 5px 9px;
+    padding: 3px 6px;
     border: 1px solid rgba(93, 108, 119, .45);
     border-radius: 2px;
     background: rgba(247, 249, 251, .9);
     color: #171717;
-    font-size: clamp(.55rem, 1vw, .82rem);
+    font-size: clamp(.43rem, .66vw, .62rem);
     font-weight: 900;
 }
 
@@ -2238,6 +2330,15 @@
     .ampi-synoptic-tools,
     .ampi-synoptic-time {
         justify-content: stretch;
+    }
+
+    .ampi-synoptic-timeline-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .ampi-static-panel:fullscreen .ampi-static-card {
+        width: 100%;
     }
 
     .ampi-synoptic-tools button,

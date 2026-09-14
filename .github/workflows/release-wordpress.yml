@@ -6,7 +6,7 @@ on:
       version:
         description: "Version à publier, sans le préfixe v"
         required: true
-        default: "1.0.14"
+        default: "1.0.15"
 
 permissions:
   contents: write
@@ -51,4 +51,4 @@ jobs:
             echo "::error::La release v${version} existe déjà ; aucun écrasement."
             exit 1
           fi
-          gh release create "v${version}" "$archive"             --title "AROME-PI WordPress v${version}"             --notes "Cartes synoptiques France sans pression superposée, boutons d’accès direct, échelles visibles, heures françaises et signature Alertes Météo. Frontières départementales officielles et rendu plus fin au zoom. Shortcode : [aromepi_meteo]."
+          gh release create "v${version}" "$archive"             --title "AROME-PI WordPress v${version}"             --notes "Lecteur d’échéances pour les cartes synoptiques, menus conservés en plein écran, températures graduées tous les 2 °C et alerte de fraîcheur corrigée. Interface allégée. Shortcode : [aromepi_meteo]."

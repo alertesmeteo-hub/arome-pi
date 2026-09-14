@@ -162,27 +162,54 @@ PRECIPITATION_STOPS = (
 )
 
 
+def _interpolated_stops(
+    anchors: tuple[tuple[float, str], ...],
+    values: Sequence[float],
+) -> tuple[tuple[float, str], ...]:
+    """Interpôle une palette sans changer la continuité du rendu cartographique."""
+
+    def rgb(colour: str) -> tuple[int, int, int]:
+        value = colour.lstrip("#")
+        return tuple(int(value[index:index + 2], 16) for index in (0, 2, 4))
+
+    result = []
+    for value in values:
+        upper = next(
+            (index for index, item in enumerate(anchors) if item[0] >= value),
+            len(anchors) - 1,
+        )
+        lower = max(0, upper - 1)
+        low_value, low_colour = anchors[lower]
+        high_value, high_colour = anchors[upper]
+        ratio = 0.0 if high_value == low_value else (
+            (float(value) - low_value) / (high_value - low_value)
+        )
+        low_rgb = rgb(low_colour)
+        high_rgb = rgb(high_colour)
+        colour = "#" + "".join(
+            f"{round(low_rgb[channel] + ratio * (high_rgb[channel] - low_rgb[channel])):02x}"
+            for channel in range(3)
+        )
+        result.append((value, colour))
+    return tuple(result)
+
+
+TEMPERATURE_ANCHORS = (
+    (-25, "#482173"), (-15, "#303fa5"), (-5, "#3478c5"),
+    (0, "#55b7dd"), (5, "#53c6a8"), (10, "#70cf66"),
+    (15, "#cbd83f"), (20, "#f2d43d"), (25, "#f2a331"),
+    (30, "#ea652b"), (35, "#d93435"), (40, "#a71f57"),
+    (45, "#5b1037"),
+)
+
+
 LAYER_SPECS = (
     LayerSpec(
         "temperature",
         "Température à 2 m — isothermes",
         "°C",
         "temperature_c",
-        (
-            (-25, "#482173"),
-            (-15, "#303fa5"),
-            (-5, "#3478c5"),
-            (0, "#55b7dd"),
-            (5, "#53c6a8"),
-            (10, "#70cf66"),
-            (15, "#cbd83f"),
-            (20, "#f2d43d"),
-            (25, "#f2a331"),
-            (30, "#ea652b"),
-            (35, "#d93435"),
-            (40, "#a71f57"),
-            (45, "#5b1037"),
-        ),
+        _interpolated_stops(TEMPERATURE_ANCHORS, tuple(range(-24, 45, 2))),
         group="Températures",
         decimals=1,
     ),

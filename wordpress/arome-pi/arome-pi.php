@@ -3,7 +3,7 @@
  * Plugin Name: AROME-PI Météo-France France — Tableaux et cartes
  * Plugin URI: https://github.com/alertesmeteo-hub/arome-pi
  * Description: Module unique de cartes interactives et de prévisions AROME-PI de Météo-France pour la France métropolitaine et la Corse.
- * Version: 1.0.14
+ * Version: 1.0.15
  * Author: Alertes Météo Hub
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -14,8 +14,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('AMPI_VERSION', '1.0.14');
-define('AMPI_RELEASE_DATE', '13/09/2026');
+define('AMPI_VERSION', '1.0.15');
+define('AMPI_RELEASE_DATE', '14/09/2026');
 define('AMPI_OPTION_BASE_URL', 'ampi_national_data_base_url');
 define(
     'AMPI_DEFAULT_BASE_URL',
@@ -33,9 +33,10 @@ define('AMPI_GITHUB_REPO', 'alertesmeteo-hub/arome-pi');
 define('AMPI_GITHUB_DATA_BRANCH', 'data');
 define('AMPI_GITHUB_WORKFLOW_BRANCH', 'main');
 define('AMPI_GITHUB_WORKFLOW_FILE', 'update-arome-pi.yml');
-// AROME-PI tourne toutes les heures : une production vieille de plus de
-// deux heures est considérée comme obsolète.
-define('AMPI_STALE_THRESHOLD_MIN', 2 * 60);
+// Le cycle AROME-PI est horaire, mais sa mise à disposition et la génération
+// des cartes peuvent déborder de deux heures. On n'alerte qu'après trois
+// heures révolues afin d'éviter les faux retards pendant une publication.
+define('AMPI_STALE_THRESHOLD_MIN', 3 * 60);
 
 add_action('wp_enqueue_scripts', 'ampi_register_assets');
 add_action('admin_init', 'ampi_register_settings');
@@ -449,7 +450,7 @@ function ampi_render_map_shortcode($atts) {
         </div>
 
         <p class="ampi-stale" data-ampim-stale role="status" hidden>
-            Attention : la dernière production AROME-PI disponible a plus de 2 heures.
+            Actualisation AROME-PI retardée.
         </p>
 
         <div class="ampim-viewport" data-ampim-viewport role="img" aria-label="Carte météo AROME-PI interactive">
@@ -577,48 +578,17 @@ function ampi_render_shortcode($atts) {
             <div class="ampi-badge">AROME-PI<br><strong>1,3 km</strong></div>
         </header>
 
-        <div class="ampi-toolbar" <?php if (!$show_selector) : ?>hidden<?php endif; ?>>
+        <div class="ampi-city-state" hidden aria-hidden="true">
             <div class="ampi-search">
-                <label for="<?php echo esc_attr($input_id); ?>">Choisissez votre commune</label>
-                <div class="ampi-search-control">
-                    <span class="ampi-search-icon" aria-hidden="true">⌕</span>
-                    <input
-                        id="<?php echo esc_attr($input_id); ?>"
-                        class="ampi-city-input"
-                        type="search"
-                        value="<?php echo esc_attr($city_name); ?>"
-                        placeholder="Nom de commune ou code postal"
-                        autocomplete="off"
-                        spellcheck="false"
-                        role="combobox"
-                        aria-autocomplete="list"
-                        aria-expanded="false"
-                        aria-controls="<?php echo esc_attr($results_id); ?>"
-                        aria-describedby="<?php echo esc_attr($status_id); ?>"
-                    >
-                </div>
-                <button type="button" class="ampi-locate-button" data-ampi-locate>📍 Détecter ma ville</button>
-                <div
-                    id="<?php echo esc_attr($results_id); ?>"
-                    class="ampi-search-results"
-                    role="listbox"
-                    hidden
-                ></div>
-                <p
-                    id="<?php echo esc_attr($status_id); ?>"
-                    class="ampi-search-status"
-                    role="status"
-                    aria-live="polite"
-                >Saisissez au moins deux lettres ou un code postal.</p>
-            </div>
-            <div class="ampi-coverage">
-                <strong>34 746 communes</strong>
-                <span>Métropole et Corse</span>
+                <input id="<?php echo esc_attr($input_id); ?>" class="ampi-city-input" type="hidden" value="<?php echo esc_attr($city_name); ?>">
+                <button type="button" data-ampi-locate tabindex="-1"></button>
+                <div id="<?php echo esc_attr($results_id); ?>" class="ampi-search-results" role="listbox" hidden></div>
+                <p id="<?php echo esc_attr($status_id); ?>" class="ampi-search-status" role="status"></p>
             </div>
         </div>
 
         <p class="ampi-stale" data-ampi-stale role="status" hidden>
-            Attention : la dernière mise à jour AROME-PI disponible a plus de 2 heures.
+            Actualisation AROME-PI retardée.
         </p>
 
         <div class="ampi-tabs" role="tablist" aria-label="Type de prévision AROME-PI">
@@ -629,20 +599,6 @@ function ampi_render_shortcode($atts) {
                 aria-selected="true"
                 data-ampi-tab="map-france"
             >Carte France</button>
-            <button
-                type="button"
-                class="ampi-tab"
-                role="tab"
-                aria-selected="false"
-                data-ampi-tab="general"
-            >Prévisions générales</button>
-            <button
-                type="button"
-                class="ampi-tab ampi-tab-storm"
-                role="tab"
-                aria-selected="false"
-                data-ampi-tab="storms"
-            >Orages</button>
             <button
                 type="button"
                 class="ampi-tab ampi-tab-snow"
@@ -808,6 +764,14 @@ function ampi_render_shortcode($atts) {
                     <select data-ampi-synoptic-step aria-label="Choisir une échéance"></select>
                 </label>
                 <div class="ampi-synoptic-layer-buttons" data-ampi-synoptic-layer-buttons aria-label="Accès direct aux cartes"></div>
+                <div class="ampi-synoptic-timeline" aria-label="Échéance de la carte synoptique">
+                    <div class="ampi-synoptic-timeline-head">
+                        <strong data-ampi-synoptic-lead>+00:00</strong>
+                        <span data-ampi-synoptic-validity>—</span>
+                    </div>
+                    <input data-ampi-synoptic-slider type="range" min="0" max="0" value="0" step="1" aria-label="Faire défiler les échéances synoptiques">
+                    <small data-ampi-synoptic-date>—</small>
+                </div>
                 <div class="ampi-synoptic-zoom" aria-label="Zoom de la carte synoptique">
                     <button type="button" data-ampi-synoptic-zoom-out title="Réduire">−</button>
                     <span data-ampi-synoptic-zoom-level>100 %</span>
@@ -821,7 +785,10 @@ function ampi_render_shortcode($atts) {
                 </div>
                 <div class="ampi-synoptic-time" aria-label="Navigation dans les échéances synoptiques">
                     <button type="button" data-ampi-synoptic-previous title="Échéance précédente" aria-label="Échéance précédente">◀</button>
+                    <button type="button" data-ampi-synoptic-play title="Lancer l’animation" aria-label="Lancer l’animation">▶</button>
                     <button type="button" data-ampi-synoptic-next title="Échéance suivante" aria-label="Échéance suivante">▶</button>
+                    <button type="button" data-ampi-synoptic-speed title="Vitesse de lecture" aria-label="Vitesse de lecture">x1</button>
+                    <strong data-ampi-synoptic-lead-control>+00:00</strong>
                 </div>
             </div>
             <div class="ampi-static-gallery" data-ampi-static-gallery>

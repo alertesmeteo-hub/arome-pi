@@ -87,7 +87,7 @@ SYNOPTIC_SPECS = (
         "Température",
         "temperature_c",
         "°C",
-        tuple(range(-24, 37, 3)),
+        tuple(range(-24, 39, 2)),
         (
             "#25104f", "#34339a", "#2468bd", "#21a6cf", "#39c8b3",
             "#76d36c", "#c7df3e", "#ffe22d", "#ffad27", "#ff6c22",
@@ -476,16 +476,21 @@ class SynopticMapRenderer:
             color="#111111",
         )
         colour_axis = fig.add_axes((0.91, 0.18, 0.022, 0.65))
-        colourbar = fig.colorbar(filled, cax=colour_axis, orientation="vertical")
+        colourbar = fig.colorbar(
+            filled,
+            cax=colour_axis,
+            orientation="vertical",
+            ticks=spec.levels if spec.key == "temperature_2m" else None,
+        )
         colourbar.set_label(f"{spec.label} ({spec.unit})", fontsize=10)
-        colourbar.ax.tick_params(labelsize=8)
+        colourbar.ax.tick_params(labelsize=6 if spec.key == "temperature_2m" else 8)
         fig.text(
             0.5,
             0.028,
             "www.alertes-meteo.com",
             ha="center",
             va="center",
-            fontsize=8,
+            fontsize=6,
             color="#555555",
         )
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -538,8 +543,15 @@ class SynopticMapRenderer:
                     "unit": spec.unit,
                     "map_layer": spec.map_layer,
                     "stops": [
-                        {"value": value, "color": colour}
-                        for value, colour in zip(spec.levels, spec.colours)
+                        {
+                            "value": value,
+                            "color": matplotlib.colors.to_hex(
+                                LinearSegmentedColormap.from_list(
+                                    f"manifest_{spec.key}", spec.colours
+                                )(index / max(1, len(spec.levels) - 1))
+                            ),
+                        }
+                        for index, value in enumerate(spec.levels)
                     ],
                 }
                 for spec in SYNOPTIC_SPECS

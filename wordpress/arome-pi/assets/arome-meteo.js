@@ -885,6 +885,14 @@
         var synopticDiagram = app.querySelector('[data-ampi-synoptic-diagram]');
         var synopticPrevious = app.querySelector('[data-ampi-synoptic-previous]');
         var synopticNext = app.querySelector('[data-ampi-synoptic-next]');
+        var synopticPlay = app.querySelector('[data-ampi-synoptic-play]');
+        var synopticSpeed = app.querySelector('[data-ampi-synoptic-speed]');
+        var synopticSlider = app.querySelector('[data-ampi-synoptic-slider]');
+        var synopticLead = app.querySelector('[data-ampi-synoptic-lead]');
+        var synopticLeadControl = app.querySelector('[data-ampi-synoptic-lead-control]');
+        var synopticValidity = app.querySelector('[data-ampi-synoptic-validity]');
+        var synopticDate = app.querySelector('[data-ampi-synoptic-date]');
+        var synopticPanel = app.querySelector('[data-ampi-panel="static"]');
         var chartTemperature = app.querySelector('[data-ampi-chart-temperature]');
         var chartPressure = app.querySelector('[data-ampi-chart-pressure]');
         var chartRain = app.querySelector('[data-ampi-chart-rain]');
@@ -1178,6 +1186,35 @@
                     ];
                     var version = maps.generated_at || '';
                     var availableLayers = [];
+                    var synopticTimer = null;
+                    var synopticSpeedValue = 1;
+
+                    function stopSynopticAnimation() {
+                        if (synopticTimer) {
+                            window.clearInterval(synopticTimer);
+                            synopticTimer = null;
+                        }
+                        if (synopticPlay) {
+                            synopticPlay.textContent = '▶';
+                            synopticPlay.classList.remove('is-playing');
+                            synopticPlay.title = 'Lancer l’animation';
+                            synopticPlay.setAttribute('aria-label', 'Lancer l’animation');
+                        }
+                    }
+
+                    function startSynopticAnimation() {
+                        stopSynopticAnimation();
+                        if (!synopticPlay || maps.steps.length < 2) { return; }
+                        synopticPlay.textContent = '❚❚';
+                        synopticPlay.classList.add('is-playing');
+                        synopticPlay.title = 'Arrêter l’animation';
+                        synopticPlay.setAttribute('aria-label', 'Arrêter l’animation');
+                        synopticTimer = window.setInterval(function () {
+                            var current = Number(synopticStep.value) || 0;
+                            synopticStep.value = String((current + 1) % maps.steps.length);
+                            renderSynoptic();
+                        }, Math.max(250, 1100 / synopticSpeedValue));
+                    }
 
                     if (!synopticLayer || !synopticStep) {
                         throw new Error('menu synoptique introuvable');
@@ -1227,6 +1264,10 @@
                         synopticStep.appendChild(option);
                     });
                     synopticStep.value = String(Math.min(1, maps.steps.length - 1));
+                    if (synopticSlider) {
+                        synopticSlider.max = String(maps.steps.length - 1);
+                        synopticSlider.value = synopticStep.value;
+                    }
                     if (synopticControls) { synopticControls.hidden = false; }
 
                     function renderSynoptic() {
@@ -1258,6 +1299,7 @@
                         }
                         var run = staticRunLabel(maps.run_time);
                         var valid = staticUtcDate(step.valid_time, true);
+                        var leadLabel = '+' + String(step.lead_hour).padStart(2, '0') + ':00';
                         var card = document.createElement('article');
                         card.className = 'ampi-static-card';
                         var art = document.createElement('div');
@@ -1278,6 +1320,15 @@
                         card.appendChild(art);
                         staticGallery.appendChild(card);
                         resetSynopticZoom();
+                        if (synopticSlider) { synopticSlider.value = String(stepIndex); }
+                        if (synopticLead) { synopticLead.textContent = leadLabel; }
+                        if (synopticLeadControl) { synopticLeadControl.textContent = leadLabel; }
+                        if (synopticValidity) {
+                            synopticValidity.textContent = staticUtcDate(step.valid_time, true);
+                        }
+                        if (synopticDate) {
+                            synopticDate.textContent = shortDateFormat.format(new Date(step.valid_time));
+                        }
                         if (synopticPrevious) { synopticPrevious.disabled = stepIndex <= 0; }
                         if (synopticNext) {
                             synopticNext.disabled = stepIndex >= maps.steps.length - 1;
@@ -1302,7 +1353,17 @@
                     }
 
                     synopticLayer.addEventListener('change', renderSynoptic);
-                    synopticStep.addEventListener('change', renderSynoptic);
+                    synopticStep.addEventListener('change', function () {
+                        stopSynopticAnimation();
+                        renderSynoptic();
+                    });
+                    if (synopticSlider) {
+                        synopticSlider.addEventListener('input', function () {
+                            synopticStep.value = synopticSlider.value;
+                            renderSynoptic();
+                        });
+                        synopticSlider.addEventListener('change', stopSynopticAnimation);
+                    }
                     if (synopticPrevious) {
                         synopticPrevious.addEventListener('click', function () {
                             changeSynopticStep(-1);
@@ -1311,6 +1372,21 @@
                     if (synopticNext) {
                         synopticNext.addEventListener('click', function () {
                             changeSynopticStep(1);
+                        });
+                    }
+                    if (synopticPlay) {
+                        synopticPlay.addEventListener('click', function () {
+                            if (synopticTimer) { stopSynopticAnimation(); }
+                            else { startSynopticAnimation(); }
+                        });
+                    }
+                    if (synopticSpeed) {
+                        synopticSpeed.addEventListener('click', function () {
+                            var speeds = [0.5, 1, 2];
+                            var current = speeds.indexOf(synopticSpeedValue);
+                            synopticSpeedValue = speeds[(current + 1) % speeds.length];
+                            synopticSpeed.textContent = 'x' + String(synopticSpeedValue).replace('.5', ',5');
+                            if (synopticTimer) { startSynopticAnimation(); }
                         });
                     }
                     if (synopticCapture) {
@@ -1350,13 +1426,16 @@
                     }
                     if (synopticFullscreen) {
                         synopticFullscreen.addEventListener('click', function () {
-                            var card = staticGallery.querySelector('.ampi-static-card');
-                            if (!card) { return; }
+                            if (!synopticPanel) { return; }
                             if (document.fullscreenElement) {
                                 document.exitFullscreen();
-                            } else if (card.requestFullscreen) {
-                                card.requestFullscreen();
+                            } else if (synopticPanel.requestFullscreen) {
+                                synopticPanel.requestFullscreen();
                             }
+                        });
+                        document.addEventListener('fullscreenchange', function () {
+                            var active = document.fullscreenElement === synopticPanel;
+                            synopticFullscreen.textContent = active ? '× Quitter plein écran' : '⛶ Plein écran';
                         });
                     }
                     renderSynoptic();
@@ -1433,12 +1512,18 @@
                         ? formatNumber(payload.model.resolution_km, 1) + ' km'
                         : '—';
                     meta.textContent = 'Run du ' + run + ' • résolution ' + resolution +
-                        ((payload.model && payload.model.storm_diagnostics) ? ' • diagnostics orages + neige AROME-PI' : '');
+                        ((payload.model && payload.model.storm_diagnostics) ? ' • diagnostics spécialisés AROME-PI' : '');
 
                     if (payload.generated_at) {
-                        generated.textContent = 'Mise à jour du tableau : ' +
-                            fullFormat.format(new Date(payload.generated_at)).replace(':', 'h');
-                        stale.hidden = (Date.now() - new Date(payload.generated_at).getTime()) <= 2 * 3600000;
+                        var generatedDate = new Date(payload.generated_at);
+                        var generatedLabel = fullFormat.format(generatedDate).replace(':', 'h');
+                        var ageHours = Math.max(0, (Date.now() - generatedDate.getTime()) / 3600000);
+                        generated.textContent = 'Mise à jour du tableau : ' + generatedLabel;
+                        stale.hidden = !Number.isFinite(ageHours) || ageHours <= 3;
+                        if (!stale.hidden) {
+                            stale.textContent = 'Actualisation AROME-PI retardée : dernières cartes générées le ' +
+                                generatedLabel + ' (il y a ' + Math.floor(ageHours) + ' h).';
+                        }
                     }
                     return payload;
                 });
