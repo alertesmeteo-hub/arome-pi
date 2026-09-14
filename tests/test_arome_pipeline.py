@@ -28,6 +28,12 @@ from update_arome_pi import (  # noqa: E402
 
 
 class AromePipelineTests(unittest.TestCase):
+    def test_current_meteofrance_wcs_coverage_names(self) -> None:
+        self.assertEqual(API_FIELDS["TEMPERATURE"][0], "T__HEIGHT")
+        self.assertEqual(API_FIELDS["PRECIPITATION"][0], "PRECIP__GROUND")
+        self.assertEqual(API_FIELDS["PRESSURE"][0], "P__SEA")
+        self.assertEqual(API_FIELDS["GUST_MAX"][0], "FF_RAF_MAX__HEIGHT")
+
     @staticmethod
     def resource(group: str, lead: int, run: str) -> Resource:
         return Resource(

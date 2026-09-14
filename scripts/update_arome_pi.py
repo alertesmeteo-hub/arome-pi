@@ -39,7 +39,7 @@ from arome_maps import DEFAULT_BOUNDS, AromeMapRenderer
 
 
 LOGGER = logging.getLogger("arome.pi")
-PIPELINE_VERSION = "1.1.0-aromepi"
+PIPELINE_VERSION = "1.1.1-aromepi"
 API_ROOT = (
     "https://public-api.meteofrance.fr/public/aromepi/1.0/wcs/"
     "MF-NWP-HIGHRES-AROMEPI-001-FRANCE-WCS"
@@ -55,56 +55,27 @@ USER_AGENT = "alertes-meteo.com/arome-pi/1.0"
 # espace naturellement les appels. Le suffixe PT1H demande bien le cumul de
 # précipitations sur l'heure écoulée.
 API_FIELDS = {
-    "TEMPERATURE": ("TEMPERATURE__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND", 2, ""),
-    "HUMIDITY": ("RELATIVE_HUMIDITY__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND", 2, ""),
-    "PRECIPITATION": (
-        "TOTAL_PRECIPITATION__GROUND_OR_WATER_SURFACE",
-        None,
-        "_PT1H",
-    ),
-    "PRESSURE": ("PRESSURE__SEA_SURFACE", None, ""),
-    "LOW_CLOUD": ("LOW_CLOUD_COVER__GROUND_OR_WATER_SURFACE", None, ""),
-    "WIND_U": (
-        "U_COMPONENT_OF_WIND__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND",
-        10,
-        "",
-    ),
-    "WIND_V": (
-        "V_COMPONENT_OF_WIND__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND",
-        10,
-        "",
-    ),
-    "GUST_U": (
-        "U_COMPONENT_OF_WIND_GUST_15MIN__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND",
-        10,
-        "",
-    ),
-    "GUST_V": (
-        "V_COMPONENT_OF_WIND_GUST_15MIN__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND",
-        10,
-        "",
-    ),
-    "REFLECTIVITY": ("REFLECTIVITY_MAX_DBZ__GROUND_OR_WATER_SURFACE", None, ""),
+    # Depuis septembre 2026, GetCapabilities publie les identifiants courts
+    # ci-dessous. Le sens météorologique et les colonnes JSON v3 ne changent
+    # pas ; seule la correspondance avec les CoverageId WCS est actualisée.
+    "TEMPERATURE": ("T__HEIGHT", 2, ""),
+    "HUMIDITY": ("HU__HEIGHT", 2, ""),
+    "PRECIPITATION": ("PRECIP__GROUND", None, "_PT1H"),
+    "PRESSURE": ("P__SEA", None, ""),
+    "LOW_CLOUD": ("NEBBAS__GROUND", None, ""),
+    "WIND_U": ("U__HEIGHT", 10, ""),
+    "WIND_V": ("V__HEIGHT", 10, ""),
+    "GUST_U": ("U_RAF_15MN__HEIGHT", 10, ""),
+    "GUST_V": ("V_RAF_15MN__HEIGHT", 10, ""),
+    "REFLECTIVITY": ("RFLCTMAX_DBZ__GROUND", None, ""),
     # Les cumuls solides AROME-PI peuvent être publiés avec un suffixe de
     # fenêtre temporelle (_PT15M, _PT1H…). Le catalogue courant expose
     # SOLID_PRECIPITATION pour le réseau le plus récent.
-    "SNOW": ("SOLID_PRECIPITATION__GROUND_OR_WATER_SURFACE", None, "*"),
-    "GRAUPEL": ("GRAUPEL__GROUND_OR_WATER_SURFACE", None, "*"),
-    "CAPE": (
-        "CONVECTIVE_AVAILABLE_POTENTIAL_ENERGY__GROUND_OR_WATER_SURFACE",
-        None,
-        "",
-    ),
-    "GUST_MAX": (
-        "WIND_SPEED_MAXIMUM_GUST__SPECIFIC_HEIGHT_LEVEL_ABOVE_GROUND",
-        10,
-        "",
-    ),
-    "ISO_ZERO": (
-        "TPW_27315_HEIGHT__LEVEL_OF_ADIABATIC_CONDENSATION",
-        None,
-        "*",
-    ),
+    "SNOW": ("NEIGE__GROUND", None, "*"),
+    "GRAUPEL": ("GRAUPEL__GROUND", None, "*"),
+    "CAPE": ("CAPE_INS__GROUND", None, ""),
+    "GUST_MAX": ("FF_RAF_MAX__HEIGHT", 10, ""),
+    "ISO_ZERO": ("ALTITUDE__ISO_TPW_27315", None, "*"),
 }
 
 # Sans température ni précipitations, la publication ne répond plus à son
