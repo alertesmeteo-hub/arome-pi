@@ -15,6 +15,7 @@ import math
 import os
 import re
 import shutil
+import sys
 import tempfile
 import time
 from collections import Counter, defaultdict
@@ -1815,8 +1816,15 @@ def main() -> int:
 
 if __name__ == "__main__":
     try:
-        raise SystemExit(main())
+        code = main()
     except Exception:
         LOGGER.exception("Échec de la mise à jour AROME-PI France")
         raise SystemExit(1)
+    # eccodes/Cartopy peuvent corrompre la mémoire au nettoyage final de
+    # l'interpréteur (« double free », exit 134/139) alors que tout est déjà
+    # écrit : on sort directement, sans finaliser les bibliothèques natives.
+    logging.shutdown()
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(code)
 
