@@ -1,0 +1,81 @@
+name: Mise à jour PIAF (pluie 5 min)
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Déclenchement réel toutes les 10 min depuis le VPS ; ce cron n'est qu'un filet de sécurité.
+    - cron: "9,39 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-piaf
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v5
+
+      - name: Installer Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Installer les dépendances
+        run: python -m pip install --disable-pip-version-check "requests>=2.32,<3" "numpy>=2.2,<3" "eccodes>=2.38,<3" "eccodeslib>=2.39,<3"
+
+      - name: Lire PIAF et construire le département 66
+        id: build
+        env:
+          METEOFRANCE_PIAF_KEY: ${{ secrets.METEOFRANCE_PIAF_KEY }}
+          METEOFRANCE_API_KEY: ${{ secrets.METEOFRANCE_API_KEY }}
+        run: |
+          # Coupures passagères de la source (connexion fermée, 429/5xx, délai dépassé) : jusqu'à 3 tentatives.
+          set -o pipefail
+          for attempt in 1 2 3; do
+            if python scripts/update_piaf.py \
+              --output-dir build/piaf \
+              --current-index-url "https://raw.githubusercontent.com/${{ github.repository }}/piaf-data/index.json" 2>&1 | tee "$RUNNER_TEMP/tentative.log"; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ] || ! grep -qiE 'RemoteDisconnected|Connection(Error|Reset|refused| aborted)|IncompleteRead|ReadTimeout|ConnectTimeout|ChunkedEncodingError|ProtocolError|Max retries exceeded|HTTP ?(Error)?:? ?(429|500|502|503|504)|timed out' "$RUNNER_TEMP/tentative.log"; then
+              echo "::error::Échec (tentative $attempt)"
+              exit 1
+            fi
+            echo "Erreur réseau passagère (tentative $attempt), nouvelle tentative dans 60 s"
+            sleep 60
+          done
+          if [ -f build/piaf/index.json ]; then echo "publish=true" >> "$GITHUB_OUTPUT"; else echo "publish=false" >> "$GITHUB_OUTPUT"; echo "Rien de nouveau à publier."; fi
+
+      - name: Vérifier la publication
+        if: steps.build.outputs.publish == 'true'
+        run: |
+          python - <<'PY'
+          import json
+          d = json.load(open("build/piaf/departements/66.json", encoding="utf-8"))
+          assert d["status"] == "ok" and len(d["points"]) > 100 and len(d["forecast"]) >= 12
+          assert d["columns"]["values"] == ["precipitation_mm", "precipitation_total_mm"]
+          print("Validation OK :", len(d["forecast"]), "échéances,", len(d["points"]), "points")
+          PY
+
+      - name: Publier la branche piaf-data
+        if: steps.build.outputs.publish == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          publish_dir="$(mktemp -d)"
+          cp -R build/piaf/. "$publish_dir/"
+          touch "$publish_dir/.nojekyll"
+          git init -q -b piaf-data "$publish_dir"
+          git -C "$publish_dir" config user.name "github-actions[bot]"
+          git -C "$publish_dir" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "$publish_dir" add .
+          git -C "$publish_dir" commit -q -m "PIAF $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git -C "$publish_dir" push -q --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:piaf-data
