@@ -10,8 +10,10 @@ jobs:
     steps:
       - name: Interroger le WCS PIAF avec la clé du dépôt (aucun secret affiché)
         env:
-          METEOFRANCE_API_KEY: ${{ secrets.METEOFRANCE_API_KEY }}
+          # Clé dédiée PIAF si elle existe (clé régénérée après souscription), sinon la clé AROME-PI.
+          METEOFRANCE_API_KEY: ${{ secrets.METEOFRANCE_PIAF_KEY || secrets.METEOFRANCE_API_KEY }}
         run: |
+          [ -n "${{ secrets.METEOFRANCE_PIAF_KEY }}" ] && echo "Clé utilisée : METEOFRANCE_PIAF_KEY" || echo "Clé utilisée : METEOFRANCE_API_KEY (pas de METEOFRANCE_PIAF_KEY)"
           for base in pro/piaf/1.0; do
             url="https://api.meteofrance.fr/$base/wcs/MF-NWP-HIGHRES-PIAF-001-FRANCE-WCS/GetCapabilities?service=WCS&version=2.0.1&language=eng"
             code=$(curl -s -o caps.xml -w '%{http_code}' -H "apikey: $METEOFRANCE_API_KEY" "$url")
