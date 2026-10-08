@@ -12,8 +12,8 @@ jobs:
         env:
           METEOFRANCE_API_KEY: ${{ secrets.METEOFRANCE_API_KEY }}
         run: |
-          for base in previsionimmediateprecipitations/1.0 PrevisionImmediatePrecipitations/1.0 piaf/1.0; do
-            url="https://public-api.meteofrance.fr/public/$base/wcs/MF-NWP-HIGHRES-PIAF-001-FRANCE-WCS/GetCapabilities?service=WCS&version=2.0.1&language=eng"
+          for base in pro/piaf/1.0; do
+            url="https://api.meteofrance.fr/$base/wcs/MF-NWP-HIGHRES-PIAF-001-FRANCE-WCS/GetCapabilities?service=WCS&version=2.0.1&language=eng"
             code=$(curl -s -o caps.xml -w '%{http_code}' -H "apikey: $METEOFRANCE_API_KEY" "$url")
             echo "HTTP $code  $base"
             if [ "$code" = "200" ]; then
@@ -21,7 +21,7 @@ jobs:
               grep -oE '<wcs:CoverageId>[^<]+' caps.xml | sed 's/<wcs:CoverageId>//' | sort -u | head -40
               cid=$(grep -oE '<wcs:CoverageId>[^<]+' caps.xml | sed 's/<wcs:CoverageId>//' | head -1)
               echo "--- DescribeCoverage $cid (extrait) :"
-              curl -s -H "apikey: $METEOFRANCE_API_KEY" "https://public-api.meteofrance.fr/public/$base/wcs/MF-NWP-HIGHRES-PIAF-001-FRANCE-WCS/DescribeCoverage?service=WCS&version=2.0.1&coverageid=$cid" | tr -d '\n' | grep -oE '<gml:lowerCorner>[^<]+|<gml:upperCorner>[^<]+|<gml:timePosition>[^<]+|<gml:GridEnvelope>.{0,120}|<swe:uom[^>]*>|<gmlrgrid:coefficients>[^<]{0,300}' | head -20
+              curl -s -H "apikey: $METEOFRANCE_API_KEY" "https://api.meteofrance.fr/$base/wcs/MF-NWP-HIGHRES-PIAF-001-FRANCE-WCS/DescribeCoverage?service=WCS&version=2.0.1&coverageid=$cid" | tr -d '\n' | grep -oE '<gml:lowerCorner>[^<]+|<gml:upperCorner>[^<]+|<gml:timePosition>[^<]+|<gml:GridEnvelope>.{0,120}|<swe:uom[^>]*>|<gmlrgrid:coefficients>[^<]{0,300}' | head -20
             else
               head -c 300 caps.xml; echo
             fi
