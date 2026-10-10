@@ -1,0 +1,23 @@
+{
+ "schema_version": 3,
+ "status": "ok",
+ "generated_at": "2026-10-10T16:24:25Z",
+ "model": {
+  "name": "PIAF 1 km — pluie 5 min (Météo-France)",
+  "provider": "Météo-France",
+  "resolution_km": 1.0,
+  "forecast_hours_requested": 3,
+  "step_minutes": 5,
+  "run_time": "2026-10-10T16:10:00Z",
+  "coverage_id": "TOTAL_PRECIPITATION_RATE__GROUND_OR_WATER_SURFACE___2026-10-10T16.10.00Z_PT5M",
+  "source_url": "https://portail-api.meteofrance.fr/web/fr/api/PrevisionImmediatePrecipitations",
+  "license": "Licence Ouverte 2.0"
+ },
+ "departments": {
+  "66": {
+   "file": "departements/66.json",
+   "points": 226,
+   "steps": 39
+  }
+ }
+}
