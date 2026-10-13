@@ -20,7 +20,9 @@ from update_arome_pi import (  # noqa: E402
     API_FIELDS,
     IncompleteRunError,
     Resource,
+    ResourceDownloadError,
     choose_resources,
+    download_resource,
     grid_index,
     load_catalog,
     transform_step,
@@ -238,6 +240,44 @@ class AromePipelineTests(unittest.TestCase):
             self.assertTrue((destination / "values/temperature/000.hkv.gz").is_file())
             disk_manifest = json.loads((destination / "index.json").read_text())
             self.assertEqual(disk_manifest["status"], "ok")
+
+    def test_empty_or_non_grib_download_is_rejected(self) -> None:
+        # Pendant la publication d'un run, l'API donne parfois une ressource de
+        # taille 0 (ISO_ZERO le 12 et le 13 octobre 2026) : refusée au
+        # téléchargement, elle devient un champ manquant au lieu de faire
+        # planter le décodage GRIB.
+        class FakeResponse:
+            def __init__(self, body: bytes) -> None:
+                self.body = body
+
+            def __enter__(self) -> "FakeResponse":
+                return self
+
+            def __exit__(self, *args: object) -> None:
+                return None
+
+            def raise_for_status(self) -> None:
+                return None
+
+            def iter_content(self, chunk_size: int):
+                yield self.body
+
+        class FakeSession:
+            def __init__(self, body: bytes) -> None:
+                self.body = body
+
+            def get(self, *args: object, **kwargs: object) -> FakeResponse:
+                return FakeResponse(self.body)
+
+        resource = Resource("ISO_ZERO", 6, "2026-10-13T02:00:00Z", "ISO_ZERO +6 h", "https://example.invalid/x", 0)
+        with tempfile.TemporaryDirectory() as tmp, patch("update_arome_pi.time.sleep"):
+            destination = Path(tmp) / "ISO_ZERO-06H.grib2"
+            for body in (b"", b"<?xml version='1.0'?><error/>"):
+                with self.assertRaises(ResourceDownloadError):
+                    download_resource(FakeSession(body), resource, destination)
+                self.assertFalse(destination.exists())
+            download_resource(FakeSession(b"GRIB" + b"\x00" * 12), resource, destination)
+            self.assertTrue(destination.exists())
 
 
 if __name__ == "__main__":

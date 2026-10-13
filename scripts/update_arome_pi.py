@@ -34,13 +34,14 @@ from eccodes import (
     codes_grib_new_from_file,
     codes_release,
 )
+from gribapi.errors import GribInternalError
 from scipy.ndimage import map_coordinates
 
 from arome_maps import DEFAULT_BOUNDS, AromeMapRenderer
 
 
 LOGGER = logging.getLogger("arome.pi")
-PIPELINE_VERSION = "1.1.2-aromepi"
+PIPELINE_VERSION = "1.1.3-aromepi"
 API_ROOT = (
     "https://public-api.meteofrance.fr/public/aromepi/1.0/wcs/"
     "MF-NWP-HIGHRES-AROMEPI-001-FRANCE-WCS"
@@ -715,6 +716,17 @@ def already_published(url: str, run_time: datetime | None) -> bool:
         return False
 
 
+def is_grib_file(path: Path) -> bool:
+    """Un GRIB commence par « GRIB ». Pendant la publication d'un run, l'API
+    renvoie parfois une ressource vide (taille 0 au catalogue) ou un message
+    d'erreur à la place du fichier : ce contenu n'est pas décodable."""
+    try:
+        with path.open("rb") as handle:
+            return handle.read(4) == b"GRIB"
+    except OSError:
+        return False
+
+
 def download_resource(
     session: requests.Session, resource: Resource, destination: Path
 ) -> None:
@@ -743,6 +755,11 @@ def download_resource(
                 raise RuntimeError(
                     f"Taille inattendue pour {resource.title} : "
                     f"{destination.stat().st_size} au lieu de {resource.size}"
+                )
+            if not is_grib_file(destination):
+                raise RuntimeError(
+                    f"Contenu non GRIB pour {resource.title} : "
+                    f"{destination.stat().st_size} octets"
                 )
             return
         except (requests.RequestException, OSError, RuntimeError) as error:
@@ -940,7 +957,22 @@ def parse_grib_files(
         expected_field = RESOURCE_FIELDS.get(resource_group)
         with path.open("rb") as handle:
             while True:
-                gid = codes_grib_new_from_file(handle)
+                try:
+                    gid = codes_grib_new_from_file(handle)
+                except GribInternalError as error:
+                    # Un champ secondaire illisible reste à null pour cette
+                    # échéance ; seuls température et pluie bloquent le run.
+                    if resource_group in CRITICAL_API_FIELDS:
+                        raise
+                    LOGGER.warning(
+                        "::warning title=Champ AROME-PI illisible::"
+                        "%s à +%02d h n'est pas décodable (%s) ; "
+                        "les valeurs correspondantes seront publiées à null.",
+                        resource_group,
+                        lead_hour,
+                        error,
+                    )
+                    break
                 if gid is None:
                     break
                 try:
